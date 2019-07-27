@@ -64,3 +64,7 @@ likerattest3=-2*log(as.numeric(real_fit['LH'])-as.numeric(the_fit['LH']))
 likerattest4=-2*log(as.numeric(notreal_lin_fit['LH'])-as.numeric(real_fit['LH']))
 #encapsulate all code in a loop that goes over increasing time.stop values in the simulated tree
 #is this equivalent to increasing the amount of data in the tree? So LRT should be mor accurate?
+
+#Also need to get confidence intervals for parameters
+
+##Is there a way to minimize wrt a whole bunch of trees at once?
