@@ -24,7 +24,7 @@ rho = 0.5 # sampling fraction
 time_grid = seq(from=0, to=100, by=0.01)
 lambdas = 2*exp(0.1*time_grid)
 mus = 0*time_grid
-sim = generate_random_tree( parameters = list(rarefaction=rho),
+sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
                             max_tips = Ntips/rho,
                             coalescent = FALSE,
                             added_rates_times = time_grid,
@@ -33,14 +33,14 @@ bigtree = sim$tree
 root_age = castor::get_tree_span(bigtree)$max_distance
 cat(sprintf("Tree has %d tips, spans %g Myr\n",length(bigtree$tip.label),root_age))
 bigtree$tip.label=1:length(bigtree$tip.label)
-plot.phylo(bigtree)
-
+ape::plot.phylo(bigtree)
+title("speciestree")
 #this code below gets the rootnode of the phylogeny but not actually
 #mat=matTree(tree=result_exp[[1]
 
 # sim.coaltree.sp(rootnode=mat[length(mat)],nodematrix=mat,nspecies=result_exp[["nblineages"]][length(result_exp[["nblineages"]])],seq=rep(1,result_exp[["nblineages"]][length(result_exp[["nblineages"]])]))
 
-newickformat=write_tree(bigtree)
+newickformat=castor::write_tree(bigtree)
 
 # write.tree(phy=result_exp[[1]],file="newick1.txt")
 # realtree=read.tree(file = "newick1")
@@ -51,7 +51,7 @@ newickformat=write_tree(bigtree)
 
 # newickformat=read.tree.string("newick1.tre",format="phylip")
 
-nodematrix=read.tree.nodes(newickformat)
+nodematrix=phybase::read.tree.nodes(newickformat)
 
 #I can set the population sizes by changing the entries of the 5th value of the matrix, 
 #use a gamma distributed value or something, maybe.
@@ -63,13 +63,14 @@ for(i in 1:nrow(nodematrix$nodes)){
 
 nspecies=length(bigtree$tip.label)
 
-specnames=1:20
+specnames=1:length(bigtree$tip.label)
 #as.integer(bigtree$tip.label)
 
 #nodematrix$nodes[nrow(nodematrix$nodes)-1,1]
 rootnode=nrow(nodematrix$nodes)
 
-genetreestuff=sim.coaltree.sp(rootnode,nodematrix$nodes,nspecies,seq=rep(1,nspecies),name=specnames)
+genetreestuff=phybase::sim.coaltree.sp(rootnode,nodematrix$nodes,nspecies,seq=rep(1,nspecies),
+                                       name=specnames)
 
 genetreeheight=genetreestuff$height
 
@@ -79,9 +80,10 @@ genetreegt=genetreestuff$gt
 
 # plot.phylo(genetreegt)
 
-thetree=read.tree(text=genetreegt)
+thetree=ape::read.tree(text=genetreegt)
 
-plot.phylo(thetree)
+ape::plot.phylo(thetree)
+title("genetree")
 
 # calculate true PDR
 lambda_slopes = diff(lambdas)/diff(time_grid);
@@ -90,8 +92,8 @@ PDRs = lambdas - mus - (lambda_slopes/lambdas)
 # Fit PDR on grid
 Ngrid = 10
 age_grid = seq(0,genetreeheight,length.out=Ngrid)
-fit = fit_hbd_pdr_on_grid(thetree,
-                          age_grid,
+fit = castor::fit_hbd_pdr_on_grid(thetree,
+                          age_grid=age_grid,
                           min_PDR = -100,
                           max_PDR = +100,
                           condition = "crown",

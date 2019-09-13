@@ -68,3 +68,7 @@ likerattest4=-2*log(as.numeric(notreal_lin_fit['LH'])-as.numeric(real_fit['LH'])
 #Also need to get confidence intervals for parameters
 
 ##Is there a way to minimize wrt a whole bunch of trees at once?
+
+#richness and diversity synonymous?
+
+#Could I simulate trees from ML estimates like in Pennell2015 and then calculate lieklihood ratios to see if they are chi-square distributed?

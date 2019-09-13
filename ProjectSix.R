@@ -116,3 +116,12 @@ if(!fit$success){
   cat(sprintf("Fitting succeeded:\nLoglikelihood=%g\n",fit$loglikelihood))
   print(fit)
 }
+
+# write.tree(phy=result_exp[[1]],file="newick1.txt")
+# realtree=read.tree(file = "newick1")
+
+#Be careful, the newickformat string ends in \n strsplit(newickformat,"\n")
+# fileName <- 'newick1.txt'
+# newickformat=readChar(fileName, file.info(fileName)$size)
+
+# newickformat=read.tree.string("newick1.tre",format="phylip")
