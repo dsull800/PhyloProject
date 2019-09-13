@@ -63,7 +63,7 @@ for(i in 1:nrow(nodematrix$nodes)){
 
 nspecies=length(bigtree$tip.label)
 
-specnames=1:20
+specnames=1:length(bigtree$tip.label)
   #as.integer(bigtree$tip.label)
 
 #nodematrix$nodes[nrow(nodematrix$nodes)-1,1]
