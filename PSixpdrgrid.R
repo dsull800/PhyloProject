@@ -89,9 +89,9 @@ lambda_slopes = c(lambda_slopes[1],lambda_slopes)
 PDRs = lambdas - mus - (lambda_slopes/lambdas)
 # Fit PDR on grid
 Ngrid = 10
-age_grid = seq(from=0,to=root_age,length.out=Ngrid)
+age_grid = seq(0,genetreeheight,length.out=Ngrid)
 fit = fit_hbd_pdr_on_grid(thetree,
-                          age_grid = seq(0,genetreeheight,length.out=10),
+                          age_grid,
                           min_PDR = -100,
                           max_PDR = +100,
                           condition = "crown",
