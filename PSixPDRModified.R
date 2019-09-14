@@ -115,6 +115,7 @@ fit = fit_hbd_psr_on_grid(thetree,
                           age_grid = age_grid,
                           min_PSR = 0,
                           max_PSR = +Inf,
+                          guess_PSR=1,
                           # fixed_PSR=rep(1,Ngrid),
                           condition = "crown",
                           Ntrials = 10,# perform 10 fitting trials
