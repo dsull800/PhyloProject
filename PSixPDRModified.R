@@ -75,12 +75,12 @@ lambda_slopes = c(lambda_slopes[1],lambda_slopes)
 PDRs = lambdas - mus - (lambda_slopes/lambdas)
 # Fit PDR on grid
 Ngrid = 10
-age_grid = seq(0,genetreeheight,length.out=Ngrid)
+age_grid = seq(0,max(node.depth.edgelength(thetree)),length.out=Ngrid)
 # age_grid=seq(0,max(node.depth.edgelength(thetree)),length.out=Ngrid)
 fit = castor::fit_hbd_pdr_on_grid(thetree,
                                   age_grid=age_grid,
-                                  min_PDR = -100,
-                                  max_PDR = +100,
+                                  min_PDR = -Inf,
+                                  max_PDR = +Inf,
                                   condition = "crown",
                                   Ntrials = 10,# perform 10 fitting trials
                                   Nthreads = 2,# use two CPUs
@@ -113,7 +113,7 @@ age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
 fit = fit_hbd_psr_on_grid(thetree,
                           oldest_age = oldest_age,
                           age_grid = age_grid,
-                          min_PSR = 0,
+                          min_PSR = -Inf,
                           max_PSR = +Inf,
                           guess_PSR=1,
                           # fixed_PSR=rep(1,Ngrid),
