@@ -12,7 +12,7 @@ for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
 Ntips = 20
 rho = 1 # sampling fraction
 time_grid = seq(from=0, to=100, by=0.01)
-for(lambdas in list(20+(100/44052.93)*exp(0.1*time_grid),0.2*time_grid+0.5,rep(2,length(time_grid)))){
+for(lambdas in list(20+(100/tail(exp(0.1*time_grid),1))*exp(0.1*time_grid),0.2*time_grid+0.5,rep(2,length(time_grid)))){
 # lambdas = 2*exp(0.1*time_grid) 44052.93 is the tail of lambdas values
 mus = 0*time_grid
 sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
@@ -97,7 +97,7 @@ if(!fit[["success"]]){
         ylab = 'PDR',
         type = 'b',
         col = 'red',
-         xlim = c(genetreeheight,0)
+         xlim = c(genetreeheight,0),
         ylim=c(-100,100))
         # xlim = c(-100,100))
   lines(x = seq(from=genetreeheight,to=0,length.out=length(time_grid)),
