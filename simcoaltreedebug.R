@@ -148,33 +148,47 @@ Ntips=20
     ape::plot.phylo(bigtree)
     title("speciestree")
     
-    results = castor::get_clade_list(bigtree, postorder=TRUE, missing_value=-9)
-    nodematrix = list(nodes=cbind(results$clades, results$lengths,
-                                  matrix(-9,nrow=nrow(results$clades),ncol=3)),names=bigtree$tip.label, root=TRUE)
+    Nnodes=bigtree$Nnode
     
-  
-    for(i in 1:nrow(nodematrix[["nodes"]])){
-      nodematrix[["nodes"]][i,5]=runif(1,min=10^8,max=10^9)*(10^-11)*2
-      #need to multiply above by mu (mutation rate per site
-      #per generation) to get true theta
-    }
+    nspecies=length(bigtree$tip.label)
     
-    nspecies=length(bigtree[["tip.label"]])
+    # results = castor::get_clade_list(bigtree, postorder=TRUE, missing_value=-9)
+    # nodematrix = list(nodes=cbind(results$clades, results$lengths,
+    #                               matrix(-9,nrow=nrow(results$clades),ncol=3)),names=bigtree$tip.label, root=TRUE)
+    # 
+    genetreestuff = generate_gene_tree_msc(bigtree,allele_counts = 1,
+                           population_sizes = runif(nspecies+Nnodes,min = 10^8,max=10^9),
+                           generation_times = runif(nspecies+Nnodes,min = 0.001,max=1),
+                           ploidy = 1);
     
-    rootnode=nrow(nodematrix[["nodes"]])
-    
-    genetreestuff=simcoal(rootnode,nodematrix[["nodes"]],nspecies,seq=rep(1,nspecies),name=bigtree[["tip.label"]])
-    
-    genetreeheight=genetreestuff[["height"]]
-    
-    realgenetree=genetreestuff[["node"]]
-    
-    genetreegt=genetreestuff[["gt"]]
-    
-    thetree=castor::read_tree(genetreegt)
+    thetree=genetreestuff$tree
     
     ape::plot.phylo(thetree)
     title("genetree")
+  
+    # 
+    # for(i in 1:nrow(nodematrix[["nodes"]])){
+    #   nodematrix[["nodes"]][i,5]=runif(1,min=10^8,max=10^9)*(10^-11)*2
+    #   #need to multiply above by mu (mutation rate per site
+    #   #per generation) to get true theta
+    # }
+    # 
+    # nspecies=length(bigtree[["tip.label"]])
+    # 
+    # rootnode=nrow(nodematrix[["nodes"]])
+    # 
+    # genetreestuff=simcoal(rootnode,nodematrix[["nodes"]],nspecies,seq=rep(1,nspecies),name=bigtree[["tip.label"]])
+    # 
+    # genetreeheight=genetreestuff[["height"]]
+    # 
+    # realgenetree=genetreestuff[["node"]]
+    # 
+    # genetreegt=genetreestuff[["gt"]]
+    # 
+    # thetree=castor::read_tree(genetreegt)
+    # 
+    # ape::plot.phylo(thetree)
+    # title("genetree")
     
     # 
     # calculate true PDR, but this doens't make sense?
@@ -207,17 +221,17 @@ Ntips=20
             ylab = 'PDR',
             type = 'b',
             col = 'red',
-            xlim = c(genetreeheight,0),
-            ylim=c(-100,100))
+            xlim = c(height,0),
+            ylim=c(-5,5))
       # xlim = c(-100,100))
-      lines(x = seq(from=genetreeheight,to=0,length.out=length(time_grid)),
+      lines(x = seq(from=height,to=0,length.out=length(time_grid)),
             y = PDRs,
             type = 'l',
             col = 'blue');
     }
     
     # Fit PSR on grid
-    oldest_age=genetreeheight/2 # only consider recent times when fitting
+    oldest_age=height/2 # only consider recent times when fitting
     Ngrid = Ntips
     age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
     fit = fit_hbd_psr_on_grid(thetree,
@@ -242,7 +256,7 @@ Ntips=20
             xlab = 'age',
             ylab = 'PSR',
             type = 'b',
-            xlim = c(genetreeheight/2,0))
+            xlim = c(oldest_age,0))
       # plot deterministic LTT of fitted model
       plot( x = fit[["age_grid"]],
             y = fit[["fitted_LTT"]],
@@ -251,7 +265,7 @@ Ntips=20
             ylab = 'lineages',
             type = 'b',
             log = 'y',
-            xlim = c(genetreeheight/2,0))
+            xlim = c(oldest_age,0))
     }
     lttcount=castor::count_lineages_through_time(thetree,Ntimes=100)
     plot(lttcount$times, lttcount$lineages, type="l", xlab="time", ylab="# clades")
