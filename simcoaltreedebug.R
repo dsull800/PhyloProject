@@ -82,6 +82,7 @@ require("ape")
       
       height<-rexp(1,rate=i*(i-1)/theta)+ node.height(rootnode,nodematrix,nspecies)
       father<-nodematrix[rootnode,1]
+      #edited below
       if(father == -9 | father == -8)
         fatherheight<-100000000000000000000000000000000000000 else
           fatherheight <- node.height(father,nodematrix,nspecies)
@@ -128,12 +129,13 @@ require("ape")
 
 ## Not run:
 # Generate a random tree with exponentially varying lambda & mu
-for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
+# for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
+Ntips=20
   rho = 1 # sampling fraction
   time_grid = seq(from=0, to=100, by=0.01)
-  for(lambdas in list(20+(100/tail(exp(0.1*time_grid),1))*exp(0.1*time_grid),0.2*time_grid+0.5,rep(2,length(time_grid)))){
-  # lambdas=rep(2,length(time_grid))
-    mus = 0*time_grid
+  # for(lambdas in list(20+(100/tail(exp(0.1*time_grid),1))*exp(0.1*time_grid),0.2*time_grid+0.5,rep(2,length(time_grid)))){
+  lambdas=0.2*time_grid+0.5
+    mus = 0.1*time_grid
     sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
                                         max_tips = Ntips/rho,
                                         # as_generations = TRUE,
@@ -152,7 +154,9 @@ for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
     
   
     for(i in 1:nrow(nodematrix[["nodes"]])){
-      nodematrix[["nodes"]][i,5]=runif(1,min=10^8,max=10^9)
+      nodematrix[["nodes"]][i,5]=runif(1,min=10^8,max=10^9)*(10^-11)*2
+      #need to multiply above by mu (mutation rate per site
+      #per generation) to get true theta
     }
     
     nspecies=length(bigtree[["tip.label"]])
@@ -251,7 +255,7 @@ for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
     }
     lttcount=castor::count_lineages_through_time(thetree,Ntimes=100)
     plot(lttcount$times, lttcount$lineages, type="l", xlab="time", ylab="# clades")
-  }#close functions loop
-  rm(list = ls())
-}#close Ntips loop
+#   }#close functions loop
+#   rm(list = ls())
+# }#close Ntips loop
     

@@ -14,7 +14,7 @@ rho = 1 # sampling fraction
 time_grid = seq(from=0, to=100, by=0.01)
 for(lambdas in list(20+(100/tail(exp(0.1*time_grid),1))*exp(0.1*time_grid),0.2*time_grid+0.5,rep(2,length(time_grid)))){
 # lambdas = 2*exp(0.1*time_grid) 44052.93 is the tail of lambdas values
-mus = 0*time_grid
+mus = 15*time_grid
 sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
                                     max_tips = Ntips/rho,
                                     # as_generations = TRUE,
@@ -52,6 +52,13 @@ nspecies=length(bigtree[["tip.label"]])
 # specnames=species.name(bigtree)
 
 rootnode=nrow(nodematrix[["nodes"]])
+
+bigtreestring=write_tree(bigtree)
+
+noclock=phybase::sim.coaltree.sp.mu(bigtreestring,spname=bigtree[["tip.label"]],numgenetree=1,alpha=5,method="dirichlet",seq=rep(1,nspecies))
+
+
+
 
 genetreestuff=phybase::sim.coaltree.sp(rootnode,nodematrix[["nodes"]],nspecies,seq=rep(1,nspecies),
                                        name=bigtree[["tip.label"]])
