@@ -1,18 +1,14 @@
 require("castor")
-require("phybase")
-require("ggtree")
-require("treeAGG")
-require("ape")
 
 ## Not run:
 # Generate a random tree with exponentially varying lambda & mu
 for(Ntips in c(rep(20,100),rep(100,100),rep(1000,100))){
 # Ntips=20
-rho = 0.5 # sampling fraction
+rho = 1 # sampling fraction
 time_grid = seq(from=0, to=100, by=0.01)
-for(lambdas in list(20+(100/tail(exp(0.1*time_grid),1))*exp(0.1*time_grid),2*time_grid+0.5,rep(30,length(time_grid)))){
+for(lambdas in list(((10^-5)/tail(exp(10^-5*time_grid),1))*exp(10^-5*time_grid),10^-6*time_grid,rep(10^-5,length(time_grid)))){
 # lambdas=0.2*time_grid+0.5
-mus = 15*time_grid
+mus = 0*time_grid
 sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
                                     max_tips = Ntips/rho,
                                     # as_generations = TRUE,
@@ -31,9 +27,9 @@ nspecies=length(bigtree$tip.label)
 
 # 
 genetreestuff = generate_gene_tree_msc(bigtree,allele_counts = 1,
-                                       population_sizes = runif(nspecies+Nnodes,min = 10^8,max=10^9),
+                                       population_sizes = 5*10^8,
                                        generation_times = 0.01,
-                                       #runif(nspecies+Nnodes,min = 0.001,max=1)
+                                       #runif(nspecies+Nnodes,min = 0.001,max=1) runif(nspecies+Nnodes,min = 10^8,max=10^9)
                                        ploidy = 1);
 
 thetree=genetreestuff$tree
@@ -55,6 +51,7 @@ fitpdr = castor::fit_hbd_pdr_on_grid(thetree,
                                      age_grid=age_grid,
                                      min_PDR = -20,
                                      max_PDR = +50,
+                                     fixed_rholambda0 = rho*tail(lambdas,1),
                                      condition = "crown",
                                      Ntrials = 10,# perform 10 fitting trials
                                      Nthreads = 4,# use two CPUs
@@ -90,8 +87,7 @@ fit = fit_hbd_psr_on_grid(thetree,
                           age_grid = age_grid,
                           min_PSR = -50,
                           max_PSR = +50,
-                          guess_PSR=1,
-                          # fixed_PSR=rep(1,Ngrid),
+                          guess_PSR=10^-5,
                           condition = "crown",
                           Ntrials = 10,# perform 10 fitting trials
                           Nthreads = 4,# use two CPUs
