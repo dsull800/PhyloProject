@@ -6,7 +6,7 @@ Ntipnumber=-1
 rho = .75 # sampling fraction
 
 for(Ntips in c(rep(20000,21))){
-  Ntipnumbber=Ntipnumber+1
+  Ntipnumber=Ntipnumber+1
 if(Ntipnumber%%3==0){
   max_val=100
 }else if(Ntipnumber%%3==1){
