@@ -110,7 +110,6 @@ if(!fitpdr[["success"]]){
 
 # Fit PSR on grid
 oldest_age=height/2 # only consider recent times when fitting
-Ngrid = Ntips
 age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
 fit = fit_hbd_psr_on_grid(gentree,
                           oldest_age = oldest_age,
