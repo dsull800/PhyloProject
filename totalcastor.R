@@ -15,6 +15,7 @@ if(Ntipnumber%%3==0){
   max_val=1
 }
 
+
 time_grid = seq(from=0, to = 5*ceiling(log(Ntips/rho)/max_val), by=0.1)
 # ln(max_tips)/(lambda-mu)
 lambda1 = exp(.1*time_grid)
@@ -45,9 +46,14 @@ title("speciestree")
 
 Nnodes=spectree$Nnode
 
+
 nspecies=length(spectree$tip.label)
 
-
+file=paste(munumber,"_",Ntips,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
+setwd("spectrees")
+file.create(file)
+write_tree(spectree,file)
+setwd("..")
 
 spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]), 
                                             oldest_age = root_age, 
@@ -55,7 +61,11 @@ spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]
                                             age_grid=time_grid,
                                             lambda=lambdas,mu=mus)
 
+#want to simulate multiple genetrees for a given species tree
+genetreenum=-1
 
+for(i in seq(1,100,by=1)){
+  genetreenum=genetreenum+1
 genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
                                        population_sizes = 10^8,
                                        generation_times = 10^-7,
@@ -85,7 +95,7 @@ fitpdr = castor::fit_hbd_pdr_on_grid(gentree,
                                      condition = "stem",
                                      Ntrials = 10,# perform 10 fitting trials
                                      Nthreads = 8,# use two CPUs
-                                     max_model_runtime = max(1,Ntips/10^5)) # limit model evaluation to 1 second
+                                     max_model_runtime = 1) # limit model evaluation to 1 second
 if(!fitpdr[["success"]]){
   cat(sprintf("ERROR: Fitting failed: %s\n",fitpdr[["error"]]))
   stop()
@@ -120,7 +130,7 @@ fit = fit_hbd_psr_on_grid(gentree,
                           condition = "stem",
                           Ntrials = 10,# perform 10 fitting trials
                           Nthreads = 8,# use two CPUs
-                          max_model_runtime = max(1,Ntips/10^5)) # limit model evaluation to 1 second
+                          max_model_runtime = 1) # limit model evaluation to 1 second
 if(!fit[["success"]]){
   cat(sprintf("ERROR: Fitting failed: %s\n",fit[["error"]]))
 }else{
@@ -154,20 +164,14 @@ plot(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# c
 title("species tree LTT")
 
 ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr. 
+file=paste(munumber,"_",Ntips,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
 setwd("gentrees")
-file=paste(munumber,"_",Ntips,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
 file.create(file)
 write_tree(gentree,file)
 
-setwd("../spectrees")
-file.create(file)
-write_tree(spectree,file)
+setwd("../fitpsrs")
 
-setwd("..")
-
-file=paste(munumber,"_",Ntips,"_",lambdanumber%%4,"_",munumber%%3,".rds",sep="")
-
-setwd("fitpsrs")
+file=paste(munumber,"_",Ntips,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
 
 saveRDS(fit,file)
 
@@ -180,7 +184,11 @@ setwd("../spectreeinfo")
 saveRDS(spectreepdrpsr,file)
 
 setwd("..")
+}#close genetreeloop
 }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
   }#close mus loop
 }#close lambdas loop
 }#close Ntips loop
+plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE); 
+plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
+file.copy(from=plots.png.paths, to="../rundata/plots")
