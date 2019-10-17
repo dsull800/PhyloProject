@@ -64,22 +64,23 @@ nspecies=length(spectree$tip.label)
 # write_tree(spectree,file)
 # setwd("..")
 
-# redefine lambdas & mus w.r.t. age_grid
-# age_grid = rev(sim$final_time - time_grid)
-# lambdas_on_age_grid = rev(lambdas)
-# mus_on_age_grid = rev(mus)
+#redefine lambdas & mus w.r.t. age_grid
+age_grid = rev(sim$final_time-time_grid)
+lambdas_on_age_grid = rev(lambdas)
+mus_on_age_grid = rev(mus)
 # 
-# spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]), 
-#                                             oldest_age = root_age,
-#                                             age_grid=age_grid,
-#                                             rho0 = rho, 
-#                                             lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
-
 spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
-                                            oldest_age = root_age,
-                                            age_grid=time_grid,
+                                            oldest_age = sim$final_time,
+                                            age0=0,
+                                            age_grid=age_grid,
                                             rho0 = rho,
-                                            lambda=lambdas,mu=mus)
+                                            lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
+
+# spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
+#                                             oldest_age = root_age,
+#                                             age_grid=time_grid,
+#                                             rho0 = rho,
+#                                             lambda=lambdas,mu=mus)
 
 #want to simulate multiple genetrees for a given species tree
 genetreenum=-1
@@ -109,9 +110,10 @@ psr_age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
 fit = fit_hbd_psr_on_grid(gentree,
                           oldest_age = oldest_age,
                           age_grid = psr_age_grid,
+                          age0=0,
                           min_PSR = -50,
                           max_PSR = +150,
-                          guess_PSR= tail(lambdas,1),
+                          guess_PSR= max_val,
                           condition = "stem",
                           Ntrials = 10,# perform 10 fitting trials
                           Nthreads = 4,# use two CPUs
