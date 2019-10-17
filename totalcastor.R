@@ -21,10 +21,11 @@ if(Ntipnumber%%3==0){
 }
 
 
-time_grid = seq(from=0, to = 10*ceiling(log(Ntips/rho)/max_val), by=0.01)
+time_grid = seq(from=0, to = 5*round(log(Ntips/rho)/max_val,digits=1), by=0.001)
 # ln(max_tips)/(lambda-mu)
-lambda1 = exp(.1*time_grid)
+lambda1 = exp(20*time_grid)
 # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)),-(max_val/2/tail(time_grid,1))*time_grid+max_val)){
+#look at constant lambda, then it doesn;t matter which end of the array is which
 for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
 # for(lambdas in list((max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)))){
   A=1.1*lambdas[floor(length(time_grid)/2)]
