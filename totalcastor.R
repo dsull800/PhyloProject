@@ -1,233 +1,308 @@
 require("castor")
-require("ggplot2")
+# require("ggplot2")
+# require("stats")
 require("prospectr")
+require("plot.matrix")
+require("matrixStats")
+
+
+
+
+
+
+
+
+binningstddev <- function(X, bins, bin.size) {
+  
+  if (is.data.frame(X)) 
+    X <- as.matrix(X)
+  if (!missing(bins) & !missing(bin.size)) 
+    stop("EITHER 'bins' OR 'bin.size' must be specified")
+  if (missing(bins) & missing(bin.size)) 
+    return(X)
+  
+  if (is.matrix(X)) 
+    p1 <- ncol(X) else p1 <- length(X)
+    
+    if (missing(bins) & !missing(bin.size)) {
+      b <- findInterval(1:p1, seq(1, p1, bin.size))
+    } else {
+      b <- findInterval(1:p1, seq(1, p1, length.out = bins + 1), rightmost.closed = T)
+    }
+    
+    p2 <- max(b)
+    
+    if (is.matrix(X)) {
+      output <- matrix(0, nrow(X), p2)
+      for (i in seq_len(p2)) {
+        output[, i] <- rowSds(X[, b == i, drop = F])
+      }
+      colnames(output) <- colnames(X)[ceiling(tapply(b, b, function(x) mean(which(b == x[1]), na.rm = T)))]  # find colnames
+      rownames(output) <- rownames(X)
+    } else {
+      output <- tapply(X, b, sd)
+      names(output) <- names(X)[ceiling(tapply(b, b, function(x) mean(which(b == x[1]), na.rm = T)))]
+    }
+    
+    return(output)
+} 
+
+
+
+
+
+
+
+
 
 lambdanumber=-1
 munumber=-1
 Ntipnumber=-1
 rho = 1 # sampling fraction
-ncol=30
-heatmapdata=data.frame(matrix(0, ncol = ncol, nrow = 3))
+ncols=30
+colnamesstuff=c()
+for(i in seq(1,ncols)){
+  inter_val=toString(i/ncols)
+  colnamesstuff=c(colnamesstuff,inter_val)
+}
+heatmapdata=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdata)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdata)=colnamesstuff
+heatmapdatasd=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdatasd)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdatasd)=colnamesstuff
 ## Rvals are 10,100,1000
 
 for(Ntips in c(rep(20000,21))){
   Ntipnumber=Ntipnumber+1
-if(Ntipnumber%%3==0){
-  max_val=100
-}else if(Ntipnumber%%3==1){
-  max_val=10
-}else {
-  max_val=1
-}
-
-
-time_grid = seq(from=0, to = 5*round(log(Ntips/rho)/max_val,digits=1), by=0.001)
-# ln(max_tips)/(lambda-mu)
-lambda1 = exp(0.5*time_grid)
-# for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)),-(max_val/2/tail(time_grid,1))*time_grid+max_val)){
-#look at constant lambda, then it doesn;t matter which end of the array is which
-for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
-# for(lambdas in list((max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)))){
-  A=1.1*lambdas[floor(length(time_grid)/2)]
-  sigma=10^-3
-  lambdanumber=lambdanumber+1
-  # for(mus in list(0*time_grid,A*exp(-(time_grid-time_grid[floor(length(time_grid)/2)])^2/(2*sigma^2)),rep(max_val/3,length(time_grid)))){
-  for(mus in list(0*time_grid)){
-    munumber=munumber+1
-# tryCatch({
-sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
-                                    max_tips = Ntips/rho,
-                                    # as_generations = TRUE,
-                                    coalescent = TRUE,
-                                    added_rates_times = time_grid,
-                                    added_birth_rates_pc = lambdas,added_death_rates_pc = mus)
-
-
-
-###ALL UNITS ARE IN MEGAYEARS
-###ALL UNITS ARE IN MEGAYEARS
-
-spectree = sim[["tree"]]
-root_age = castor::get_tree_span(spectree)[["max_distance"]]
-cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
-ape::plot.phylo(spectree)
-title("speciestree")
-
-Nnodes=spectree$Nnode
-
-
-nspecies=length(spectree$tip.label)
-# Ntipnumber was ntips in old simulation
-file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
-setwd("spectrees")
-file.create(file)
-write_tree(spectree,file)
-setwd("..")
-
-#redefine lambdas & mus w.r.t. age_grid
-age_grid = rev(sim$final_time-time_grid)
-lambdas_on_age_grid = rev(lambdas)
-mus_on_age_grid = rev(mus)
-# 
-spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
-                                            oldest_age = sim$final_time,
-                                            age0=0,
-                                            age_grid=age_grid,
-                                            rho0 = rho,
-                                            lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
-
-
-#want to simulate multiple genetrees for a given species tree
-genetreenum=-1
-
-for(i in seq(1,10,by=1)){
-  genetreenum=genetreenum+1
-genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
-                                       population_sizes = 10^8,
-                                       generation_times = 10^-7,
-                                       #runif(nspecies+Nnodes,min = 0.001,max=1) runif(nspecies+Nnodes,min = 10^8,max=10^9)
-                                       ploidy = 1);
-
-gentree=genetreestuff$tree
-
-ape::plot.phylo(gentree)
-title("genetree")
-
-
-# Fit PSR on grid
-#maybe iterate over fineness of grid points?
-Ngrid = 5
-#only fit on species tree height?
-# height=max(get_all_distances_to_root(gentree))
-# height=root_age
-height=sim$final_time
-oldest_age=height # only consider recent times when fitting
-psr_age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
-fit = fit_hbd_psr_on_grid(gentree,
-                          oldest_age = oldest_age,
-                          age_grid = psr_age_grid,
-                          age0=0,
-                          min_PSR = -50,
-                          max_PSR = +150,
-                          guess_PSR= max_val,
-                          condition = "stem",
-                          Ntrials = 10,# perform 10 fitting trials
-                          Nthreads = 4,# use two CPUs
-                          max_model_runtime = 1) # limit model evaluation to 1 second
-if(!fit[["success"]]){
-  cat(sprintf("ERROR: Fitting failed: %s\n",fit[["error"]]))
-}else{
-  cat(sprintf("Fitting succeeded:\nLoglikelihood=%g\n",fit[["loglikelihood"]]))
-  # plot fitted PSR
-  plot( x = fit[["age_grid"]],
-        y = fit[["fitted_PSR"]],
-        main = 'Fitted PSR',
-        xlab = 'age',
-        ylab = 'PSR',
-        type = 'b',
-        xlim = c(oldest_age,0))
-  # plot deterministic LTT of fitted model, something is weird with the values/plot?
-  plot( x = fit[["age_grid"]],
-        y = fit[["fitted_LTT"]],
-        main = 'Fitted dLTT',
-        xlab = 'age',
-        ylab = 'lineages',
-        type = 'b',
-        log = 'y',
-        xlim = c(oldest_age,0))
-}
-
-lttcountgen=castor::count_lineages_through_time(gentree,Ntimes=100)
-plot(lttcountgen$times, lttcountgen$lineages, type="l", xlab="time", ylab="# clades")
-title("species tree/gene tree LTT")
-
-
-lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100)
-lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
-
-
-
-##plot epsilon over time
-lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=spectreepdrpsr$ages,method="linear")$y
-
-
-#spectreepdrpsr$PSR is very close to 0, need to use double precision?
-epsilon=(lambda_hat_p_prime-spectreepdrpsr$PSR)/spectreepdrpsr$PSR
-
-
-NAend=1
-while(spectreepdrpsr$ages[NAend]<0|NAend==length(spectreepdrpsr$ages)+1){
-  
-  NAend=NAend+1
-  
-}
-
-almostrealepsilonvals=epsilon[NAend:length(epsilon)]
-
-NAend2=1
-while(!is.na(almostrealepsilonvals[NAend2])|NAend2==length(almostrealepsilonvals)+1){
-  
-  NAend2=NAend2+1
-  
-}
-
-realepsilonvals=almostrealepsilonvals[1:NAend2-1]
-
-realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
-
-binnedepsilons=binning(realepsilonvals,ncol)
-
-if(Ntipnumber%%3==0){
-  for(i in length(binnedepsilons)){
-    heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
+  if(Ntipnumber%%3==0){
+    max_val=100
+  }else if(Ntipnumber%%3==1){
+    max_val=10
+  }else {
+    max_val=1
   }
-}else if(Ntipnumber%%3==1){
-  for(i in length(binnedepsilons)){
-    heatmapdata[2,i]=dataframe[2,i]+binnedepsilons[i]
-    #need to figure out what to divide by to normalize
-  }
-}else {
-  for(i in length(binnedepsilons)){
-    heatmapdata[3,i]=dataframe[3,i]+binnedepsilons[i]
-  }
-}
+  
+  
+  time_grid = seq(from=0, to = 5*round(log(Ntips/rho)/max_val,digits=1), by=0.001)
+  # ln(max_tips)/(lambda-mu)
+  lambda1 = exp(0.5*time_grid)
+  # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)),-(max_val/2/tail(time_grid,1))*time_grid+max_val)){
+  #look at constant lambda, then it doesn;t matter which end of the array is which
+  for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
+    A=1.1*lambdas[floor(length(time_grid)/2)]
+    sigma=10^-3
+    lambdanumber=lambdanumber+1
+    # for(mus in list(0*time_grid,A*exp(-(time_grid-time_grid[floor(length(time_grid)/2)])^2/(2*sigma^2)),rep(max_val/3,length(time_grid)))){
+    for(mus in list(0*time_grid)){
+      munumber=munumber+1
+      tryCatch({
+      sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
+                                          max_tips = Ntips/rho,
+                                          # as_generations = TRUE,
+                                          coalescent = TRUE,
+                                          added_rates_times = time_grid,
+                                          added_birth_rates_pc = lambdas,added_death_rates_pc = mus)
+      
+      
+      
+      ###ALL UNITS ARE IN MEGAYEARS
+      ###ALL UNITS ARE IN MEGAYEARS
+      
+      spectree = sim[["tree"]]
+      root_age = castor::get_tree_span(spectree)[["max_distance"]]
+      cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
+      ape::plot.phylo(spectree)
+      title("speciestree")
+      
+      Nnodes=spectree$Nnode
+      
+      
+      nspecies=length(spectree$tip.label)
+      # Ntipnumber was ntips in old simulation
+      file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
+      setwd("spectrees")
+      file.create(file)
+      write_tree(spectree,file)
+      setwd("..")
+      
+      #redefine lambdas & mus w.r.t. age_grid
+      age_grid = rev(sim$final_time-time_grid)
+      lambdas_on_age_grid = rev(lambdas)
+      mus_on_age_grid = rev(mus)
+      # 
+      spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
+                                                  oldest_age = sim$final_time,
+                                                  age0=0,
+                                                  age_grid=age_grid,
+                                                  rho0 = rho,
+                                                  lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
+      
+      
+      #want to simulate multiple genetrees for a given species tree
+      genetreenum=-1
+      
+      for(i in seq(1,10)){
+        genetreenum=genetreenum+1
+        genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
+                                               population_sizes = 10^8,
+                                               generation_times = 10^-7,
+                                               #runif(nspecies+Nnodes,min = 0.001,max=1) runif(nspecies+Nnodes,min = 10^8,max=10^9)
+                                               ploidy = 1);
+        
+        gentree=genetreestuff$tree
+        
+        ape::plot.phylo(gentree)
+        title("genetree")
+        
+        
+        # Fit PSR on grid
+        #maybe iterate over fineness of grid points?
+        Ngrid = 5
+        #only fit on species tree height?
+        # height=max(get_all_distances_to_root(gentree))
+        # height=root_age
+        height=sim$final_time
+        oldest_age=height # only consider recent times when fitting
+        psr_age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
+        fit = fit_hbd_psr_on_grid(gentree,
+                                  oldest_age = oldest_age,
+                                  age_grid = psr_age_grid,
+                                  age0=0,
+                                  min_PSR = -50,
+                                  max_PSR = +150,
+                                  guess_PSR= max_val,
+                                  condition = "stem",
+                                  Ntrials = 10,# perform 10 fitting trials
+                                  Nthreads = 4,# use two CPUs
+                                  max_model_runtime = 1) # limit model evaluation to 1 second
+        if(!fit[["success"]]){
+          cat(sprintf("ERROR: Fitting failed: %s\n",fit[["error"]]))
+        }else{
+          cat(sprintf("Fitting succeeded:\nLoglikelihood=%g\n",fit[["loglikelihood"]]))
+          # plot fitted PSR
+          plot( x = fit[["age_grid"]],
+                y = fit[["fitted_PSR"]],
+                main = 'Fitted PSR',
+                xlab = 'age',
+                ylab = 'PSR',
+                type = 'b',
+                xlim = c(oldest_age,0))
+          # plot deterministic LTT of fitted model, something is weird with the values/plot?
+          plot( x = fit[["age_grid"]],
+                y = fit[["fitted_LTT"]],
+                main = 'Fitted dLTT',
+                xlab = 'age',
+                ylab = 'lineages',
+                type = 'b',
+                log = 'y',
+                xlim = c(oldest_age,0))
+        }
+        
+        lttcountgen=castor::count_lineages_through_time(gentree,Ntimes=100)
+        plot(lttcountgen$times, lttcountgen$lineages, type="l", xlab="time", ylab="# clades")
+        title("species tree/gene tree LTT")
+        
+        
+        lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100)
+        lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
+        
+        
+        
+        ##plot epsilon over time
+        lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=spectreepdrpsr$ages,method="linear")$y
+        
+        
+        #spectreepdrpsr$PSR is very close to 0, need to use double precision?
+        epsilon=(lambda_hat_p_prime-spectreepdrpsr$PSR)/spectreepdrpsr$PSR
+        
+        
+        NAend=1
+        while(spectreepdrpsr$ages[NAend]<0|NAend==length(spectreepdrpsr$ages)+1){
+          
+          NAend=NAend+1
+          
+        }
+        
+        almostrealepsilonvals=epsilon[NAend:length(epsilon)]
+        
+        NAend2=1
+        while(!is.na(almostrealepsilonvals[NAend2])|NAend2==length(almostrealepsilonvals)+1){
+          
+          NAend2=NAend2+1
+          
+        }
+        
+        realepsilonvals=almostrealepsilonvals[1:NAend2-1]
+        
+        realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
+        
+        binnedepsilons=binning(realepsilonvals,ncols)
+        
+        binnedepsilonssd=binningstddev(realepsilonvals,bins=ncols)
+        
+        if(Ntipnumber%%3==0){
+          for(i in length(binnedepsilons)){
+            heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
+            heatmapdatasd[1,i]=heatmapdatasd[1,i]+binnedepsilonssd[i]
+          }
+        }else if(Ntipnumber%%3==1){
+          for(i in length(binnedepsilons)){
+            heatmapdata[2,i]=heatmapdata[2,i]+binnedepsilons[i]
+            heatmapdatasd[2,i]=heatmapdatasd[2,i]+binnedepsilonssd[i]
+            #need to figure out what to divide by to normalize
+          }
+        }else {
+          for(i in length(binnedepsilons)){
+            heatmapdata[3,i]=heatmapdata[3,i]+binnedepsilons[i]
+            heatmapdatasd[3,i]=heatmapdatasd[3,i]+binnedepsilonssd[i]
+          }
+        }
+        
+        #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
+        plot(y=epsilon,x=spectreepdrpsr$ages)
+        title("epsilon vs. time")
+        ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
+        file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
+        setwd("gentrees")
+        file.create(file)
+        write_tree(gentree,file)
+        
+        setwd("../fitpsrs")
+        
+        file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
+        
+        saveRDS(fit,file)
+        
+        # setwd("../fitpdrs")
+        #
+        # saveRDS(fitpdr,file)
+        
+        setwd("../spectreeinfo")
+        
+        saveRDS(spectreepdrpsr,file)
+        
+        setwd("../epsilonvals")
 
-#linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
-plot(y=epsilon,x=spectreepdrpsr$ages)
-title("epsilon vs. time")
-### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
-file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
-setwd("gentrees")
-file.create(file)
-write_tree(gentree,file)
-
-setwd("../fitpsrs")
-
-file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
-
-saveRDS(fit,file)
-
-# setwd("../fitpdrs")
-#
-# saveRDS(fitpdr,file)
-
-setwd("../spectreeinfo")
-
-saveRDS(spectreepdrpsr,file)
-
-setwd("../epsilonvals")
-
-saveRDS(epsilon,file)
-
-setwd("..")
-stop()
-}#close genetreeloop
-# }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
-  }#close mus loop
-}#close lambdas loop
+        saveRDS(binnedepsilons,file)
+        
+        setwd("../epsilonsd")
+        
+        saveRDS(binnedepsilonssd,file)
+        
+        setwd("..")
+        
+      }#close genetreeloop
+      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
+    }#close mus loop
+  }#close lambdas loop
 }#close Ntips loop
 
-geom_bin2d(data = heatmapdata, stat = "bin2d",position = "identity")
+plot(heatmapdata)
+title("average epsilons")
+
+plot(heatmapdatasd)
+title("average stddev epsilons")
 
 plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE); 
 plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
