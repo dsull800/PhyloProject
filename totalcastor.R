@@ -1,13 +1,13 @@
 require("castor")
+require("ggplot2")
+require("prospectr")
 
 lambdanumber=-1
 munumber=-1
 Ntipnumber=-1
 rho = 1 # sampling fraction
-epsilonmatrix100=matrix(nrow=10,ncol=3)
-epsilonmatrix10=matrix(nrow=10,ncol=3)
-epsilonmatrix1=matrix(nrow=10,ncol=3)
-
+ncol=30
+heatmapdata=data.frame(matrix(0, ncol = ncol, nrow = 3))
 ## Rvals are 10,100,1000
 
 for(Ntips in c(rep(20000,21))){
@@ -23,7 +23,7 @@ if(Ntipnumber%%3==0){
 
 time_grid = seq(from=0, to = 5*round(log(Ntips/rho)/max_val,digits=1), by=0.001)
 # ln(max_tips)/(lambda-mu)
-lambda1 = exp(20*time_grid)
+lambda1 = exp(0.5*time_grid)
 # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)),-(max_val/2/tail(time_grid,1))*time_grid+max_val)){
 #look at constant lambda, then it doesn;t matter which end of the array is which
 for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
@@ -57,12 +57,12 @@ Nnodes=spectree$Nnode
 
 
 nspecies=length(spectree$tip.label)
-#Ntipnumber was ntips in old simulation
-# file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
-# setwd("spectrees")
-# file.create(file)
-# write_tree(spectree,file)
-# setwd("..")
+# Ntipnumber was ntips in old simulation
+file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
+setwd("spectrees")
+file.create(file)
+write_tree(spectree,file)
+setwd("..")
 
 #redefine lambdas & mus w.r.t. age_grid
 age_grid = rev(sim$final_time-time_grid)
@@ -76,11 +76,6 @@ spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]
                                             rho0 = rho,
                                             lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
 
-# spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
-#                                             oldest_age = root_age,
-#                                             age_grid=time_grid,
-#                                             rho0 = rho,
-#                                             lambda=lambdas,mu=mus)
 
 #want to simulate multiple genetrees for a given species tree
 genetreenum=-1
@@ -104,7 +99,8 @@ title("genetree")
 Ngrid = 5
 #only fit on species tree height?
 # height=max(get_all_distances_to_root(gentree))
-height=root_age
+# height=root_age
+height=sim$final_time
 oldest_age=height # only consider recent times when fitting
 psr_age_grid = seq(from=0,to=oldest_age,length.out=Ngrid)
 fit = fit_hbd_psr_on_grid(gentree,
@@ -158,37 +154,81 @@ lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=spectre
 #spectreepdrpsr$PSR is very close to 0, need to use double precision?
 epsilon=(lambda_hat_p_prime-spectreepdrpsr$PSR)/spectreepdrpsr$PSR
 
+
+NAend=1
+while(spectreepdrpsr$ages[NAend]<0|NAend==length(spectreepdrpsr$ages)+1){
+  
+  NAend=NAend+1
+  
+}
+
+almostrealepsilonvals=epsilon[NAend:length(epsilon)]
+
+NAend2=1
+while(!is.na(almostrealepsilonvals[NAend2])|NAend2==length(almostrealepsilonvals)+1){
+  
+  NAend2=NAend2+1
+  
+}
+
+realepsilonvals=almostrealepsilonvals[1:NAend2-1]
+
+realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
+
+binnedepsilons=binning(realepsilonvals,ncol)
+
+if(Ntipnumber%%3==0){
+  for(i in length(binnedepsilons)){
+    heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
+  }
+}else if(Ntipnumber%%3==1){
+  for(i in length(binnedepsilons)){
+    heatmapdata[2,i]=dataframe[2,i]+binnedepsilons[i]
+    #need to figure out what to divide by to normalize
+  }
+}else {
+  for(i in length(binnedepsilons)){
+    heatmapdata[3,i]=dataframe[3,i]+binnedepsilons[i]
+  }
+}
+
 #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
 plot(y=epsilon,x=spectreepdrpsr$ages)
 title("epsilon vs. time")
+### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
+file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
+setwd("gentrees")
+file.create(file)
+write_tree(gentree,file)
 
-# ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr. 
-# file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
-# setwd("gentrees")
-# file.create(file)
-# write_tree(gentree,file)
-# 
-# setwd("../fitpsrs")
-# 
-# file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
-# 
-# saveRDS(fit,file)
-# 
-# # setwd("../fitpdrs")
-# # 
-# # saveRDS(fitpdr,file)
-# 
-# setwd("../spectreeinfo")
-# 
-# saveRDS(spectreepdrpsr,file)
-# 
-# setwd("..")
+setwd("../fitpsrs")
+
+file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
+
+saveRDS(fit,file)
+
+# setwd("../fitpdrs")
+#
+# saveRDS(fitpdr,file)
+
+setwd("../spectreeinfo")
+
+saveRDS(spectreepdrpsr,file)
+
+setwd("../epsilonvals")
+
+saveRDS(epsilon,file)
+
+setwd("..")
 stop()
 }#close genetreeloop
 # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
   }#close mus loop
 }#close lambdas loop
 }#close Ntips loop
+
+geom_bin2d(data = heatmapdata, stat = "bin2d",position = "identity")
+
 plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE); 
 plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
 file.copy(from=plots.png.paths, to="../rundata/plots")
