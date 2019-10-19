@@ -6,12 +6,6 @@ require("plot.matrix")
 require("matrixStats")
 
 
-
-
-
-
-
-
 binningstddev <- function(X, bins, bin.size) {
   
   if (is.data.frame(X)) 
@@ -51,15 +45,14 @@ binningstddev <- function(X, bins, bin.size) {
 
 
 
-
-
-
-
 lambdanumber=-1
 munumber=-1
 Ntipnumber=-1
 rho = 1 # sampling fraction
 ncols=30
+count100=1
+count10=1
+count1=1
 colnamesstuff=c()
 for(i in seq(1,ncols)){
   inter_val=toString(i/ncols)
@@ -71,6 +64,11 @@ colnames(heatmapdata)=colnamesstuff
 heatmapdatasd=matrix(0,nrow=3,ncol=ncols)
 rownames(heatmapdatasd)=c("max_val 100","max_val 10","max_val 1")
 colnames(heatmapdatasd)=colnamesstuff
+
+matrix100=matrix(nrow=21*10/3,ncol=ncols)
+matrix10=matrix(nrow=21*10/3,ncol=ncols)
+matrix1=matrix(nrow=21*10/3,ncol=ncols)
+
 ## Rvals are 10,100,1000
 
 for(Ntips in c(rep(20000,21))){
@@ -245,18 +243,24 @@ for(Ntips in c(rep(20000,21))){
           for(i in length(binnedepsilons)){
             heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
             heatmapdatasd[1,i]=heatmapdatasd[1,i]+binnedepsilonssd[i]
+            matrix100[count100,i]=binnedepsilons[i]
           }
+        count100=count100+1
         }else if(Ntipnumber%%3==1){
           for(i in length(binnedepsilons)){
             heatmapdata[2,i]=heatmapdata[2,i]+binnedepsilons[i]
             heatmapdatasd[2,i]=heatmapdatasd[2,i]+binnedepsilonssd[i]
             #need to figure out what to divide by to normalize
+            matrix10[count10,i]=binnedepsilons[i]
           }
+          count10=count10+1
         }else {
           for(i in length(binnedepsilons)){
             heatmapdata[3,i]=heatmapdata[3,i]+binnedepsilons[i]
             heatmapdatasd[3,i]=heatmapdatasd[3,i]+binnedepsilonssd[i]
+            matrix1[count1,i]=binnedepsilons[i]
           }
+          count1=count1+1
         }
         
         #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
@@ -297,6 +301,15 @@ for(Ntips in c(rep(20000,21))){
     }#close mus loop
   }#close lambdas loop
 }#close Ntips loop
+
+epsilonsd100=colSds(matrix100)
+epsilonsd10=colSds(matrix10)
+epsilonsd1=colSds(matrix1)
+
+epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
+
+plot(epsilonsdreal)
+title("sd epsilons")
 
 plot(heatmapdata)
 title("average epsilons")
