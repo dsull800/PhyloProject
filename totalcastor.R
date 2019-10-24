@@ -169,7 +169,7 @@ for(Ntips in c(rep(20000,21))){
           
           # Fit PSR on grid
           #maybe iterate over fineness of grid points?
-          Ngrid = 2
+          Ngrid = 5
           #only fit on species tree height?
           # height=max(get_all_distances_to_root(gentree))
           # height=root_age
