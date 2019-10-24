@@ -114,6 +114,15 @@ for(Ntips in c(rep(20000,21))){
                                             coalescent = TRUE,
                                             added_rates_times = time_grid,
                                             added_birth_rates_pc = lambdas,added_death_rates_pc = mus)
+        while(length(sim$tree$tip.label)<20000||length(sim$tree$tip.label)>30000){
+          sim = castor::generate_random_tree( parameters = list(rarefaction=rho),
+                                              # max_tips = Ntips/rho,
+                                              # as_generations = TRUE,
+                                              max_time=time_grid[length(time_grid)],
+                                              coalescent = TRUE,
+                                              added_rates_times = time_grid,
+                                              added_birth_rates_pc = lambdas,added_death_rates_pc = mus)
+        }
         
         
         
@@ -238,17 +247,17 @@ for(Ntips in c(rep(20000,21))){
             NAend=NAend+1
             
           }
-
+          
           almostrealepsilonvals=epsilon[NAend:length(epsilon)]
-
+          
           NAend2=1
           # |NAend2==length(almostrealepsilonvals)
           while(!is.na(almostrealepsilonvals[NAend2])){
-
+            
             NAend2=NAend2+1
-
+            
           }
-
+          
           realepsilonvals=almostrealepsilonvals[1:NAend2-1]
           
           if(any_na(realepsilonvals)){
@@ -256,7 +265,7 @@ for(Ntips in c(rep(20000,21))){
             print("this one has NA realepislonvals")
           }
           
-
+          
           realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
           
           binnedepsilons=binning(realepsilonvals,ncols)
@@ -298,7 +307,7 @@ for(Ntips in c(rep(20000,21))){
           
           binnedepsilonsnew=binning(realepsilonvalsnew,ncols)
           
-          binnedepsilonssd=binningstddev(realepsilonvalsnew,bins=ncols)
+          binnedepsilonssdnew=binningstddev(realepsilonvalsnew,bins=ncols)
           
           #need to figure out what to divide by to normalize
           if(Ntipnumber%%3==0){
