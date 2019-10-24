@@ -70,6 +70,17 @@ matrix100=matrix(nrow=21*10/3,ncol=ncols)
 matrix10=matrix(nrow=21*10/3,ncol=ncols)
 matrix1=matrix(nrow=21*10/3,ncol=ncols)
 
+heatmapdatanew=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdatanew)=colnamesstuff
+heatmapdatasdnew=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdatasdnew)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdatasdnew)=colnamesstuff
+
+matrix100new=matrix(nrow=21*10/3,ncol=ncols)
+matrix10new=matrix(nrow=21*10/3,ncol=ncols)
+matrix1new=matrix(nrow=21*10/3,ncol=ncols)
+
 ## Rvals are 10,100,1000
 
 for(Ntips in c(rep(20000,21))){
@@ -83,7 +94,7 @@ for(Ntips in c(rep(20000,21))){
   }
   
   
-  time_grid = seq(from=0, to = 5*round(log(Ntips/rho)/max_val,digits=1), by=0.01)
+  time_grid = seq(from=0, to = 1.2*round(log(Ntips/rho)/max_val,digits=1), by=0.01)
   # ln(max_tips)/(lambda-mu)
   lambda1 = exp(0.5*time_grid)
   # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(time_grid,1))*time_grid+max_val/2,rep(max_val,length(time_grid)),-(max_val/2/tail(time_grid,1))*time_grid+max_val)){
@@ -125,7 +136,7 @@ for(Ntips in c(rep(20000,21))){
         file.create(file)
         write_tree(spectree,file)
         setwd("..")
-        
+        # 
         #redefine lambdas & mus w.r.t. age_grid
         age_grid = rev(sim$final_time-time_grid)
         lambdas_on_age_grid = rev(lambdas)
@@ -158,7 +169,7 @@ for(Ntips in c(rep(20000,21))){
           
           # Fit PSR on grid
           #maybe iterate over fineness of grid points?
-          Ngrid = 5
+          Ngrid = 2
           #only fit on species tree height?
           # height=max(get_all_distances_to_root(gentree))
           # height=root_age
@@ -199,8 +210,12 @@ for(Ntips in c(rep(20000,21))){
                   xlim = c(oldest_age,0))
           }
           
-          lttcountgen=castor::count_lineages_through_time(gentree,Ntimes=100)
-          plot(lttcountgen$times, lttcountgen$lineages, type="l", xlab="time", ylab="# clades")
+          NGtips = length(gentree$tip.label)
+          gene_root_age = castor::get_tree_span(gentree)$max_distance
+          gene_LTT = castor::count_lineages_through_time(gentree, max_time=gene_root_age*0.999, Ntimes=floor(sqrt(NGtips)/10), include_slopes=TRUE, regular_grid=FALSE)
+          gene_PSR = gene_LTT$relative_slopes
+          
+          plot(gene_LTT$times, gene_LTT$lineages, type="l", xlab="time", ylab="# clades")
           title("species tree/gene tree LTT")
           
           
@@ -211,14 +226,14 @@ for(Ntips in c(rep(20000,21))){
           
           ##plot epsilon over time
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=spectreepdrpsr$ages,method="linear")$y
-          
+          lambda_hat_p_prime_new=approx(x=gene_LTT$times,y=gene_PSR,xout=spectreepdrpsr$ages,method="linear")$y
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-spectreepdrpsr$PSR)/spectreepdrpsr$PSR
           
-          #logic for while loops works (I think) but might need to change to something like while(is.na(epsilon[NAend])&NAend!=length(epsilon)){ to account for length of array
           NAend=1
-          while(is.na(epsilon[NAend])|NAend==length(epsilon)){
+          #|NAend==length(epsilon)
+          while(is.na(epsilon[NAend])){
             
             NAend=NAend+1
             
@@ -227,7 +242,8 @@ for(Ntips in c(rep(20000,21))){
           almostrealepsilonvals=epsilon[NAend:length(epsilon)]
 
           NAend2=1
-          while(!is.na(almostrealepsilonvals[NAend2])|NAend2==length(almostrealepsilonvals)){
+          # |NAend2==length(almostrealepsilonvals)
+          while(!is.na(almostrealepsilonvals[NAend2])){
 
             NAend2=NAend2+1
 
@@ -243,23 +259,68 @@ for(Ntips in c(rep(20000,21))){
 
           realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
           
-          binnedepsilons=binning(epsilon,ncols)
+          binnedepsilons=binning(realepsilonvals,ncols)
           
-          binnedepsilonssd=binningstddev(epsilon,bins=ncols)
+          binnedepsilonssd=binningstddev(realepsilonvals,bins=ncols)
           
+          
+          
+          
+          epsilonnew=(lambda_hat_p_prime_new-spectreepdrpsr$PSR)/spectreepdrpsr$PSR
+          
+          NAend=1
+          #|NAend==length(epsilon)
+          while(is.na(epsilonnew[NAend])){
+            
+            NAend=NAend+1
+            
+          }
+          
+          almostrealepsilonvalsnew=epsilonnew[NAend:length(epsilon)]
+          
+          NAend2=1
+          # |NAend2==length(almostrealepsilonvals)
+          while(!is.na(almostrealepsilonvalsnew[NAend2])){
+            
+            NAend2=NAend2+1
+            
+          }
+          
+          realepsilonvalsnew=almostrealepsilonvalsnew[1:NAend2-1]
+          
+          if(any_na(realepsilonvalsnew)){
+            print(file)
+            print("this one has NA realepislonvalsnew")
+          }
+          
+          
+          realepsilonagesnew=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
+          
+          binnedepsilonsnew=binning(realepsilonvalsnew,ncols)
+          
+          binnedepsilonssd=binningstddev(realepsilonvalsnew,bins=ncols)
+          
+          #need to figure out what to divide by to normalize
           if(Ntipnumber%%3==0){
             for(i in 1:length(binnedepsilons)){
               heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
               heatmapdatasd[1,i]=heatmapdatasd[1,i]+binnedepsilonssd[i]
               matrix100[count100,i]=binnedepsilons[i]
+              
+              heatmapdatanew[1,i]=heatmapdatanew[1,i]+binnedepsilonsnew[i]
+              heatmapdatasdnew[1,i]=heatmapdatasdnew[1,i]+binnedepsilonssdnew[i]
+              matrix100new[count100,i]=binnedepsilonsnew[i]
             }
             count100=count100+1
           }else if(Ntipnumber%%3==1){
             for(i in 1:length(binnedepsilons)){
               heatmapdata[2,i]=heatmapdata[2,i]+binnedepsilons[i]
               heatmapdatasd[2,i]=heatmapdatasd[2,i]+binnedepsilonssd[i]
-              #need to figure out what to divide by to normalize
               matrix10[count10,i]=binnedepsilons[i]
+              
+              heatmapdatanew[2,i]=heatmapdatanew[2,i]+binnedepsilonsnew[i]
+              heatmapdatasdnew[2,i]=heatmapdatasdnew[2,i]+binnedepsilonssdnew[i]
+              matrix10new[count10,i]=binnedepsilons[i]
             }
             count10=count10+1
           }else {
@@ -267,6 +328,10 @@ for(Ntips in c(rep(20000,21))){
               heatmapdata[3,i]=heatmapdata[3,i]+binnedepsilons[i]
               heatmapdatasd[3,i]=heatmapdatasd[3,i]+binnedepsilonssd[i]
               matrix1[count1,i]=binnedepsilons[i]
+              
+              heatmapdatanew[3,i]=heatmapdatanew[3,i]+binnedepsilonsnew[i]
+              heatmapdatasdnew[3,i]=heatmapdatasdnew[3,i]+binnedepsilonssdnew[i]
+              matrix1new[count1,i]=binnedepsilonsnew[i]
             }
             count1=count1+1
           }
@@ -324,6 +389,21 @@ title("average epsilons")
 
 plot(heatmapdatasd)
 title("average stddev epsilons")
+
+epsilonsd100new=colSds(matrix100new)
+epsilonsd10new=colSds(matrix10new)
+epsilonsd1new=colSds(matrix1new)
+
+epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
+
+plot(epsilonsdrealnew)
+title("sd epsilons new")
+
+plot(heatmapdatanew)
+title("average epsilons new")
+
+plot(heatmapdatasdnew)
+title("average stddev epsilons new")
 
 plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE); 
 plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
