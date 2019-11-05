@@ -1,0 +1,186 @@
+while f(Gi|S) is Rannala and Yang’s gene tree density given a species tree
+
+Rannala, B. and Yang, Z. (2003) Bayes estimation of species divergence
+times and ancestral population sizes using DNA sequences from
+multiple loci. Genetics 164, 1645–1656
+
+Degnan, J.H. and Salter, L.A. (2005) Gene tree distributions under the
+coalescent process. Evolution Int. J. Org. Evolution 59, 24–37
+
+ancestral recombination graph
+
+
+In addition, the standard methods rely on all branches in the species tree being very long compared to within-species coalescence times. This means that the coalescent can be ignored: regardless of how we sample, all (neutral) gene genealogies will rapidly coalesce within their species, and thereafter have the same topology as the species tree.
+
+Rannala B, Yang Z (2003) Bayes estimation of
+species divergence times and ancestral population sizes using DNA sequences from multiple loci. Genetics 164:1645–1656
+
+MP-EST
+
+
+The likelihood of a set of gene trees given a species
+tree with branch lengths can be ascertained using functions in
+Phybase [142].
+
+Liu L, Yu L (2010) Phybase: an R package
+for species tree analysis. Bioinformatics
+26:962–963
+
+Likelihood of phylogeny doesn't depend on topology in B-D models, Morlon et al. www.pnas.org/cgi/content/short/1102543108 2 of 12
+
+The equivalence between our likelihood and the likelihood in Nee et al. (3), which depends only
+on branching times (not branching intervals), shows that trees with
+the same branching times but different topology have the same
+likelihood under our model assumptions (7)
+
+How do we account for extinct lineages when we do stuff with gene trees inside of B-D species trees? we can only sample extant species.
+
+Does a gene tree only make sense in a pure birth tree? Maybe I should start trying to make a likelihood function for gene tree given some parameters for GT but also for yule process model.
+
+need likelihood of branching times under yule model.
+
+Gene trees within species trees, there- fore, are analogous to species trees within area cladograms in biogeography or to parasite trees within host trees in coevo- lutionary studies
+
+Stilianos is really looking to shake up the field of phylogenetics, look at model comparison stuff, identifiability and congruence classes of specific models.
+
+
+See figure 5 szollosi: P(A|G,S), examine papers for ODT, MP-EST,... use bayes rule and see if we can reverse engineer probability of species tree given gene tree.
+
+Why not find the probability of a gene tree given population parameters, (branching times, effective population sizes) as well as lambda, mu and topology and branching times of birth death species tree? Do people already use MP-EST and STAR for these things?
+
+The taus in the model by rannala and yang are the divergence times of the species tree, they aren't estimated, they go away in the integral over species trees, but what about the thetas, effective population sizes?
+
+Equation 16 in supplemental material in in louca's paper gives likelihood for B-D process, can we use this as the likelihood in the integral?
+
+To account for topology can we sum over all m (lineages going in to branch at time in past, maximum number is equal to the number of total lineages in the gene tree?) and all n<m (n is all lineages coming out at time closer to present)
+
+Can I simulate species trees with RPANDA and then use some other program to simulate gene trees from the species trees?
+
+Make sure that integral over all the taus is definite!!!!
+
+I am not going to account for HGT or other kinds of events in gene tree simulation.
+
+fit_hbd_pdr_on_grid castor, use this to fit pulled b-d species tree.
+
+
+
+
+Plan for simulating: Simulate species trees using RPANDA function sim_env_bd. Maybe even castor function simulate_deterministic_hbd can be used to simulate birth death tree. Then simulate gene trees on these species trees using PhyBase function sim.coaltree.sp??? perhaps there is some other sim.*** that will be useful for simulating. Once we have these simulated gene trees, we can use castor function fit_hbd_pdr_on_grid to fit paramters from lambdap. Maybe we can use RPANDA function fit_env to fit paramters.
+
+
+Louca's simulate_dterministic_hbd doesn;t give a tree, just LTT values.
+
+reconstruct_past_diversification castor
+
+something weird happens when I relabel tip.labels on bigtree, why does it work?
+
+Error: $ operator is invalid for atomic vectors get this error sometimes, maybe swith to [["itemgoeshere"]]
+
+Error in optim(init, optimLH, method = meth) : 
+  function cannot be evaluated at initial parameters
+
+
+min_rholambda0
+Strictly positive numeric, specifying the lower bound for the fitted ρλo (sampling fraction times present-day extinction rate).
+This is a typo, should be present day speciation rate
+
+as_generations doesn't work
+
+what is wrong with the PDR plot?
+
+include constant function in loop
+
+fitted params is empty vector?
+
+what the hell is completement? line 136 fit_hbd_psr_on_grid.R
+
+sampling fraction does weird stuff to names, when it is lower than one you must rename the the tip labels
+
+does tip labelling matter when fitting the pulled speciation rate?
+
+We estimate that there are about 1.4–1.9 million extant bacterial lineages when lineages are defined by 99% similarity in the 16S ribosomal RNA gene, and that bacterial diversity has been continuously increasing over the past 1 billion years (Gyr). Recent bacterial extinction rates are estimated at 0.03–0.05 per lineage per million years (lineage–1 Myr–1), and are only slightly below estimated recent bacterial speciation rates.
+
+	 this link has 16s rna datasets
+
+the species tree in which the coalescent tree is simulated must be ultrametric meaning that extinct lineages will cause problems. 
+
+Coalescent methods for estimating phylogenetic trees
+For example, one area in major need of further research is estimating species trees in the absence of a molecular clock, something that was accomplished long ago for gene
+trees. Currently several species tree methods assume that the root
+of the species tree is known (for example, BEST (Liu, 2008) and
+STAR) and it would be useful to relax this assumption, as well as
+to devise ways of allowing the species tree to be non-ultrametric.
+
+But what about TreeSim? sim.genespeciestree
+
+simulating coalescent trees on non-ultrametric species trees.
+
+PhyML with the GTRþG model (Tavare, 1986; Yang, 1994). We converted the species tree to an ultrametric tree by equalizing the distances from the tips to the root of the tree
+Liu-2015
+
+is there some way to split up the species tree into parts, lineages that existed until present, lineages theat went extinct?
+
+Should there be multiple genes, not just 16S RNA?
+
+Are the trees used in louca2018 gene trees? If so, can I just use those for the ASTRAL 3 species tree estimation?
+
+can we use different inferred geen trees for the same gene in place of multiple gene trees from different genes?
+
+seems like people who simulate coalescent trees on birth death trees assume gene lineages only in extant lineages, Does gene tree discordance explain the mismatch between macroevolutionary models and empirical patterns of tree shape and branching times?
+
+The louca2018 gene trees should be split based on bacteria/cyanobacteria, should be apparent from the filenames
+
+ERROR: Fitting failed: Provided age-grid range (0 - 1.20583) does not cover entire required age range (0 - 1.20583) look at lines 50-51 in fit_hbd_pdr_on_grid
+
+need to figure out units for taus and coalescent times so i can figure out what is going on in the phybase packages. Look at cited articles for phybase. theta=4*N_e*mu
+
+The population size and branch lengths in the species tree are in mutation units. Phybase lit. So what are mutation units?
+
+Both the speciation times (taus) and the coalescent times (the t’s) are measured by the expected number of mutations per site. R and Yang 2003
+
+A maximum pseudo-likelihood approach for estimating species trees under the coalescent model, go to simulation section.
+
+I beleive that we need bacterial generation time. coal units in 2N generations, so to convert species tree in units of time we need to go time*(generations/time). tau=time*(#generations/time)*mu.
+
+coalescent time in units of generations, actually maybe dimensionless? I think it is dimensionless.
+
+2N individuals per generation?
+
+when simulating gene tree inside of species tree with huge population sizes, will the genes coalesce in the root nodes' father always to a good approximation? guess it depends on length of branches.
+
+birth-death trees are analagous to trees with relaxed molecular clock
+
+ Error in spnodedepth[father] : 
+  only 0's may be mixed with negative subscripts 
+
+  If we had constant theta (N_e) across lineages, could we rescale and still have an ultrametric tree?
+
+  Typo in email, rannala and yangs fromula expects an ultrametric species tree
+
+  Burbrink: To model the more realistic situation in which θ varies throughout the tree, we repeated the above simulations while al- lowing θ to randomly vary across the tree at every node. Using the same methods described above for each of the 100 species trees by tree size (25, 50, 75, and 100), we produced 100 gene trees with a random assignment of θ for each node sampled from a gamma distribution. LOOK AT sim.coaltree.sp.mu
+
+  First, we calcu- lated γ for the species tree, which was produced using BEST (Liu 2008) as described in (Leache ́ 2010), and has branch lengths equaling divergence time in coalescent units (μ [mutation rate] ∗ τ [generation time]).
+
+  ASTRAL uses dynamic programming to solve the problem using the recursive relation:
+
+  Looks like the reccurence needs space on the order of the set Y?  Something about the number of allowed tripartitions. the size of
+the set Y is O (|X|^1.726) and |X| = O(nk).
+
+  I should probably install simphy and go through the procedure described in astral3SI for 5k taxon gene trees
+
+  Is there a difference between using fewer trees with many 10s of thousands of species compared to using many trees with 100s or 100s of taxon?
+
+  https://github.com/smirarab/ASTRAL/tree/MP Check this out and see if it can do ASTRAL stuff faster.
+
+  can we potentially treat staisitcs calculated from gene trees as bootstrap samples and then comapre to species tree statistic?
+
+  For getting heatmap of stddevs, i am calculating the standard devs of the epsilon values within bins, maybe I need to take average for each epsilon vector then find the standard deviation across runs. 
+
+  The value of R is determined before the run, setting max_val to be whatever doesn;t gaurantee that R will be calculated with lambda_0=max_val because simulation usually ends before that time is reached.
+
+  Maybe I should set species tree simulation to run until the end of the time grid and not until a fixed number of tips is reached.
+
+  distribution of branch lengths under the multispecies coalescent is dependent on the branch lengths of the species tree and population size parameters θ=4N_eμ. Then branch lengths are exponenitally distributed, but it seems like need to marginalize over all possible gene trees, similar to what I have written down in the likelihood.pdf 
+
+  LOUCA2018SI Hence, if diversity is close to speciation/extinction equilibrium (|r| <<λo), and λ changes only slowly, the
+pulled extinction rate is approximately equal to the recent extinction rate λo. Does he mean recent speciation rate in the last part?
