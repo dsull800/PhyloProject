@@ -57,7 +57,7 @@ for(Ntips in c(rep(20000,21))){
   #look at constant lambda, then it doesn;t matter which end of the array is which
   for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
     A=1.1*lambdas[floor(length(age_grid_sim)/2)]
-    sigma=10^-3
+    sigma=5*10^-2
     lambdanumber=lambdanumber+1
     # for(mus in list(0*age_grid_sim,A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)),rep(max_val/3,length(age_grid_sim)))){
     for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
