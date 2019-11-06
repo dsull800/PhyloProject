@@ -167,12 +167,11 @@ for(Ntips in c(rep(20000,21))){
                                                          include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
-          plot(gene_LTT$times, gene_LTT$lineages, type="l", xlab="time", ylab="# clades")
-          title("species tree/gene tree LTT")
-          
-          
           lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100)
-          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
+          
+          plot(gene_LTT$times, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red")
+          lines(lttcountspec$times+distancebetween, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
+          title("species tree/gene tree LTT")
           
           # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
           # --> lttcountspec$relative_slopes[] is synchronized with ages[] = root_age - lttcountspec$times[]
@@ -182,7 +181,7 @@ for(Ntips in c(rep(20000,21))){
           real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
           
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
-          lambda_hat_p_prime_new=approx(x=gene_LTT$times,y=gene_PSR,xout=age_grid_sim,method="linear")$y
+          lambda_hat_p_prime_new=approx(x=distancebetween+gene_LTT$times,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
