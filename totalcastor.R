@@ -62,7 +62,7 @@ for(Ntips in c(rep(20000,21))){
     # for(mus in list(0*age_grid_sim,A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)),rep(max_val/3,length(age_grid_sim)))){
     for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
       munumber=munumber+1
-      tryCatch({
+      # tryCatch({
         sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=oldest_age_sim,rho=rho)
         
         
@@ -158,7 +158,13 @@ for(Ntips in c(rep(20000,21))){
           NGtips = length(gentree$tip.label)
           # gene_root_age = castor::get_tree_span(gentree)$max_distance
           #for max_time use oldest age_sim because all we need to fit is time that species trees exists
-          gene_LTT = castor::count_lineages_through_time(gentree, max_time=oldest_age_sim, Ntimes=len(oldest_age_sim), include_slopes=TRUE, regular_grid=TRUE)
+          root_age = castor::get_tree_span(spectree)[["max_distance"]]
+          root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
+          distancebetween=root_age_gene_tree-root_age
+          gene_LTT = castor::count_lineages_through_time(gentree, 
+                                                         # max_time=oldest_age_sim, Ntimes=length(oldest_age_sim), 
+                                                         times=distancebetween+age_grid_sim,
+                                                         include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
           plot(gene_LTT$times, gene_LTT$lineages, type="l", xlab="time", ylab="# clades")
@@ -336,7 +342,7 @@ for(Ntips in c(rep(20000,21))){
           setwd("..")
           
         }#close genetreeloop
-      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
+      # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
     }#close mus loop
   }#close lambdas loop
 }#close Ntips loop
