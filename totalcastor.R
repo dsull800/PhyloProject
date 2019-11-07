@@ -81,7 +81,7 @@ for(Ntips in c(rep(20000,21))){
         nspecies=length(spectree$tip.label)
         # Ntipnumber was ntips in old simulation
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
-        dir.create("spectrees")
+        # dir.create("spectrees")
         setwd("spectrees")
         file.create(file)
         write_tree(spectree,file)
@@ -118,7 +118,7 @@ for(Ntips in c(rep(20000,21))){
           
           # Fit PSR on grid
           
-          Ngrid = 5
+          Ngrid = 10
           
           psr_age_grid = seq(from=0,to=oldest_age_sim,length.out=Ngrid)
           fit = fit_hbd_psr_on_grid(gentree,
@@ -169,8 +169,8 @@ for(Ntips in c(rep(20000,21))){
           
           lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100)
           
-          plot(gene_LTT$times, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red")
-          lines(lttcountspec$times+distancebetween, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
+          plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red")
+          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
           title("species tree/gene tree LTT")
           
           # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
@@ -181,7 +181,7 @@ for(Ntips in c(rep(20000,21))){
           real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
           
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
-          lambda_hat_p_prime_new=approx(x=distancebetween+gene_LTT$times,y=gene_PSR,xout=age_grid_sim,method="linear")$y
+          lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
@@ -300,22 +300,22 @@ for(Ntips in c(rep(20000,21))){
           #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
           ##changeworking DIRECTORY
           pdf(file=file, width=5, height=5)
-          plot(y=realepsilonvals,x=spectreepdrpsr$ages)
+          plot(y=realepsilonvals,x=age_grid_sim)
           title("epsilon vs. time")
           
           
-          plot(y=realepsilonvalsnew,x=spectreepdrpsr$ages)
+          plot(y=realepsilonvalsnew,x=age_grid_sim)
           title("realepsilon vs. time")
           
           invisible(dev.off());
           
           ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
           file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
-          dir.create("gentrees")
-          dir.create("fitpsrs")
-          dir.create("spectreeinfo")
-          dir.create("epsilonvals")
-          dir.create("epsilonsd")
+          # dir.create("gentrees")
+          # dir.create("fitpsrs")
+          # dir.create("spectreeinfo")
+          # dir.create("epsilonvals")
+          # dir.create("epsilonsd")
           setwd("gentrees")
           file.create(file)
           write_tree(gentree,file)
@@ -333,10 +333,6 @@ for(Ntips in c(rep(20000,21))){
           setwd("../epsilonvals")
           
           saveRDS(binnedepsilons,file)
-          
-          setwd("../epsilonsd")
-          
-          saveRDS(binnedepsilonssd,file)
           
           setwd("..")
           
