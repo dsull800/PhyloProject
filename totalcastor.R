@@ -14,7 +14,7 @@ rho = 1 # sampling fraction
 count100=1
 count10=1
 count1=1
-oldest_age_sim=1
+oldest_age_sim=10
 age_grid_fineness=.01
 ncols=oldest_age_sim/age_grid_fineness+1
 colnamesstuff=c()
@@ -72,8 +72,8 @@ for(Ntips in c(rep(20000,21))){
         spectree = sim$trees[[1]]
         root_age = castor::get_tree_span(spectree)[["max_distance"]]
         cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
-        ape::plot.phylo(spectree)
-        title("speciestree")
+        # ape::plot.phylo(spectree)
+        # title("speciestree")
         
         Nnodes=spectree$Nnode
         
@@ -112,8 +112,8 @@ for(Ntips in c(rep(20000,21))){
           
           gentree=genetreestuff$tree
           
-          ape::plot.phylo(gentree)
-          title("genetree")
+          # ape::plot.phylo(gentree)
+          # title("genetree")
           
           
           # Fit PSR on grid
@@ -167,10 +167,10 @@ for(Ntips in c(rep(20000,21))){
                                                          include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
-          lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100)
+          lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100,include_slopes = TRUE)
           
-          plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red")
-          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades")
+          plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,21000))
+          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,21000))
           title("species tree/gene tree LTT")
           
           # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
@@ -181,7 +181,8 @@ for(Ntips in c(rep(20000,21))){
           real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
           
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
-          lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
+          # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
+          lambda_hat_p_prime_new=gene_PSR
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
@@ -350,11 +351,11 @@ epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(epsilonsdreal)
-title("sd epsilons")
+# title("sd epsilons")
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(heatmapdata)
-title("average epsilons")
+# title("average epsilons")
 
 
 epsilonsd100new=colSds(matrix100new)
@@ -365,8 +366,8 @@ epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(epsilonsdrealnew)
-title("sd epsilons new")
+# title("sd epsilons new")
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(heatmapdatanew)
-title("average epsilons new")
+# title("average epsilons new")
