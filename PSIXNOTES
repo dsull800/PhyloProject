@@ -184,3 +184,7 @@ the set Y is O (|X|^1.726) and |X| = O(nk).
 
   LOUCA2018SI Hence, if diversity is close to speciation/extinction equilibrium (|r| <<λo), and λ changes only slowly, the
 pulled extinction rate is approximately equal to the recent extinction rate λo. Does he mean recent speciation rate in the last part?
+
+High R value corresponds to high ILS (Incomplete Lineage Sorting)
+
+Take a look at gene_LTT, make sure that right times are being selected.
