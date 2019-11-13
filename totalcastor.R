@@ -27,6 +27,8 @@ heatmapdata=matrix(0,nrow=3,ncol=ncols)
 rownames(heatmapdata)=c("max_val 100","max_val 10","max_val 1")
 colnames(heatmapdata)=colnamesstuff
 
+spectreematrix=matrix(0,nrow=21,ncols=ncols)
+
 matrix100=matrix(0,nrow=21*10/3,ncol=ncols)
 matrix10=matrix(0,nrow=21*10/3,ncol=ncols)
 matrix1=matrix(0,nrow=21*10/3,ncol=ncols)
@@ -100,6 +102,8 @@ for(Ntips in c(rep(20000,21))){
                                                     lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
         
         
+        
+        
         #want to simulate multiple genetrees for a given species tree
         genetreenum=-1
         
@@ -169,7 +173,7 @@ for(Ntips in c(rep(20000,21))){
                                                          include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
-          lttcountspec=castor::count_lineages_through_time(spectree,Ntimes=100,include_slopes = TRUE)
+          lttcountspec=castor::count_lineages_through_time(spectree,times=age_grid_sim,include_slopes = TRUE)
           
           plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,21000))
           lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,21000))
@@ -185,6 +189,12 @@ for(Ntips in c(rep(20000,21))){
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
           # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           lambda_hat_p_prime_new=gene_PSR
+          
+          #maybe should make a plot of the relative error between the PSRs of spectree and sim deterministic hbd 
+          lambda_hat_spectree=lttcountspec$relative_slopes
+          
+          epsilonspectree=(lambda_hat_spectree-real_lambda_hat)/real_lambda_hat
+          
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
@@ -352,6 +362,10 @@ epsilonsd1=colSds(matrix1)
 
 epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
 
+setwd("../matrixplots")
+
+pdf(file=file, width=5, height=5)
+
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(epsilonsdreal,border=NA)
 # title("sd epsilons")
@@ -374,3 +388,5 @@ plot(epsilonsdrealnew,border=NA)
 par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(heatmapdatanew/(21*10/3),border=NA)
 #title("average epsilons new")
+
+invisible(dev.off())
