@@ -15,7 +15,8 @@ count100=1
 count10=1
 count1=1
 oldest_age_sim=10
-age_grid_fineness=.01
+#decreasefineness to decrease finite diff errors?
+age_grid_fineness=.1
 ncols=oldest_age_sim/age_grid_fineness+1
 colnamesstuff=c()
 for(i in seq(1,ncols)){
@@ -57,12 +58,12 @@ for(Ntips in c(rep(20000,21))){
   #look at constant lambda, then it doesn;t matter which end of the array is which
   for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
     A=1.1*lambdas[floor(length(age_grid_sim)/2)]
-    sigma=5*10^-2
+    sigma=.5
     lambdanumber=lambdanumber+1
     # for(mus in list(0*age_grid_sim,A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)),rep(max_val/3,length(age_grid_sim)))){
     for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
       munumber=munumber+1
-      # tryCatch({
+      tryCatch({
         sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=oldest_age_sim,rho=rho)
         
         
@@ -161,6 +162,7 @@ for(Ntips in c(rep(20000,21))){
           root_age = castor::get_tree_span(spectree)[["max_distance"]]
           root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
           distancebetween=root_age_gene_tree-root_age
+          #need to increase fineness of times so that finite difference errors are mitigated, actually need to remove dependence on age_grid_sim
           gene_LTT = castor::count_lineages_through_time(gentree, 
                                                          # max_time=oldest_age_sim, Ntimes=length(oldest_age_sim), 
                                                          times=distancebetween+age_grid_sim,
@@ -179,7 +181,7 @@ for(Ntips in c(rep(20000,21))){
           
           ##plot epsilon over time
           real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
-          
+          #xout shouldn;t depend on age_grid_sim, should be less
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
           # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           lambda_hat_p_prime_new=gene_PSR
@@ -300,6 +302,7 @@ for(Ntips in c(rep(20000,21))){
           
           #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
           ##changeworking DIRECTORY
+          setwd("storedplots")
           pdf(file=file, width=5, height=5)
           plot(y=realepsilonvals,x=age_grid_sim)
           title("epsilon vs. time")
@@ -317,7 +320,7 @@ for(Ntips in c(rep(20000,21))){
           # dir.create("spectreeinfo")
           # dir.create("epsilonvals")
           # dir.create("epsilonsd")
-          setwd("gentrees")
+          setwd("../gentrees")
           file.create(file)
           write_tree(gentree,file)
           
@@ -338,7 +341,7 @@ for(Ntips in c(rep(20000,21))){
           setwd("..")
           
         }#close genetreeloop
-      # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
+      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
     }#close mus loop
   }#close lambdas loop
 }#close Ntips loop
@@ -350,11 +353,11 @@ epsilonsd1=colSds(matrix1)
 epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(epsilonsdreal)
+plot(epsilonsdreal,border=NA)
 # title("sd epsilons")
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(heatmapdata)
+plot(heatmapdata/(21*10/3),border=NA)
 # title("average epsilons")
 
 
@@ -365,9 +368,9 @@ epsilonsd1new=colSds(matrix1new)
 epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(epsilonsdrealnew)
+plot(epsilonsdrealnew,border=NA)
 # title("sd epsilons new")
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(heatmapdatanew)
-# title("average epsilons new")
+plot(heatmapdatanew/(21*10/3),border=NA)
+#title("average epsilons new")
