@@ -327,6 +327,9 @@ for(Ntips in c(rep(20000,21))){
           plot(y=realepsilonvalsnew,x=age_grid_sim)
           title("realepsilon vs. time")
           
+          plot(y=epsilonspectree,x=age_grid_sim)
+          title("disparity between real/sim spec psr")
+          
           invisible(dev.off());
           
           ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
