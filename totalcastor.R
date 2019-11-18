@@ -7,6 +7,13 @@ require("matrixStats")
 require("naniar")
 
 
+# dir.create("gentrees")
+# dir.create("fitpsrs")
+# dir.create("spectreeinfo")
+# dir.create("epsilonvals")
+# dir.create("epsilonsd")
+# dir.create("spectrees")
+
 lambdanumber=-1
 munumber=-1
 Ntipnumber=-1
@@ -51,20 +58,19 @@ for(Ntips in c(rep(20000,21))){
   }else if(Ntipnumber%%3==1){
     max_val=10
   }else {
-    # changed from 1 to be very small dso that there isn't any ILS
+    # changed from 1 to be very small so that there isn't any ILS
     max_val=10^-3
   }
+  
   
   age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
   # ln(max_tips)/(lambda-mu)
   lambda1 = exp(0.5*age_grid_sim)
-  # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2,(max_val/2*tail(age_grid_sim,1))*age_grid_sim+max_val/2,rep(max_val,length(age_grid_sim)),-(max_val/2/tail(age_grid_sim,1))*age_grid_sim+max_val)){
-  #look at constant lambda, then it doesn;t matter which end of the array is which
   for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
     A=1.1*lambdas[floor(length(age_grid_sim)/2)]
     sigma=.5
     lambdanumber=lambdanumber+1
-    # for(mus in list(0*age_grid_sim,A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)),rep(max_val/3,length(age_grid_sim)))){
+    #get 9/10 value from age_grid_sim for lambdas
     for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
       munumber=munumber+1
       tryCatch({
@@ -86,7 +92,6 @@ for(Ntips in c(rep(20000,21))){
         nspecies=length(spectree$tip.label)
         # Ntipnumber was ntips in old simulation
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
-        # dir.create("spectrees")
         setwd("spectrees")
         file.create(file)
         write_tree(spectree,file)
@@ -112,6 +117,15 @@ for(Ntips in c(rep(20000,21))){
         
         epsilonspectree=(lambda_hat_spectree-real_lambda_hat)/real_lambda_hat
         
+        setwd("lambdaplots")
+        
+        file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".pdf",sep="")
+        pdf(file=file, width=5, height=5)
+        plot(y=real_lambda_hat,x=age_grid_sim)
+        plot(y=lambda_hat_spectree,x=age_grid_sim)
+        invisible(dev.off());
+        
+        setwd("..")
         
         for(i in 1:length(epsilonspectree)){
           spectreematrix[countspec,i]=spectreematrix[countspec,i]+epsilonspectree[i]
@@ -335,11 +349,6 @@ for(Ntips in c(rep(20000,21))){
           
           ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
           file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
-          # dir.create("gentrees")
-          # dir.create("fitpsrs")
-          # dir.create("spectreeinfo")
-          # dir.create("epsilonvals")
-          # dir.create("epsilonsd")
           setwd("../gentrees")
           file.create(file)
           write_tree(gentree,file)
@@ -372,31 +381,33 @@ epsilonsd1=colSds(matrix1)
 
 epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
 
-setwd("../matrixplots")
-
-pdf(file=file, width=5, height=5)
-
-par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(epsilonsdreal,border=NA)
-# title("sd epsilons")
-
-par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(heatmapdata/(21*10/3),border=NA)
-# title("average epsilons")
-
-
 epsilonsd100new=colSds(matrix100new)
 epsilonsd10new=colSds(matrix10new)
 epsilonsd1new=colSds(matrix1new)
 
 epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
 
+setwd("matrixplots")
+file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".pdf",sep="")
+pdf(file=file, width=5, height=5)
+
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(epsilonsdrealnew,border=NA)
+plot(epsilonsdreal,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+# title("sd epsilons")
+
+par(mar=c(5.1, 4.1, 4.1, 4.1))
+plot(heatmapdata/(21*10/3),border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+# title("average epsilons")
+
+par(mar=c(5.1, 4.1, 4.1, 4.1))
+plot(epsilonsdrealnew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 # title("sd epsilons new")
 
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-plot(heatmapdatanew/(21*10/3),border=NA)
+plot(heatmapdatanew/(21*10/3),border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 #title("average epsilons new")
 
-invisible(dev.off())
+par(mar=c(5.1, 5.1, 5.1, 5.1))
+plot(spectreematrix,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+
+invisible(dev.off());
