@@ -14,6 +14,7 @@ rho = 1 # sampling fraction
 count100=1
 count10=1
 count1=1
+countspec=1
 oldest_age_sim=10
 #decreasefineness to decrease finite diff errors?
 age_grid_fineness=.1
@@ -27,7 +28,7 @@ heatmapdata=matrix(0,nrow=3,ncol=ncols)
 rownames(heatmapdata)=c("max_val 100","max_val 10","max_val 1")
 colnames(heatmapdata)=colnamesstuff
 
-spectreematrix=matrix(0,nrow=21,ncols=ncols)
+spectreematrix=matrix(0,nrow=21,ncol=ncols)
 
 matrix100=matrix(0,nrow=21*10/3,ncol=ncols)
 matrix10=matrix(0,nrow=21*10/3,ncol=ncols)
@@ -50,7 +51,8 @@ for(Ntips in c(rep(20000,21))){
   }else if(Ntipnumber%%3==1){
     max_val=10
   }else {
-    max_val=1
+    # changed from 1 to be very small dso that there isn't any ILS
+    max_val=10^-3
   }
   
   age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
@@ -101,8 +103,20 @@ for(Ntips in c(rep(20000,21))){
                                                     rho0 = rho,
                                                     lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
         
+        lttcountspec=castor::count_lineages_through_time(spectree,times=age_grid_sim,include_slopes = TRUE)
+        
+        #maybe should make a plot of the relative error between the PSRs of spectree and sim deterministic hbd 
+        real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
+        
+        lambda_hat_spectree=lttcountspec$relative_slopes
+        
+        epsilonspectree=(lambda_hat_spectree-real_lambda_hat)/real_lambda_hat
         
         
+        for(i in 1:length(epsilonspectree)){
+          spectreematrix[countspec,i]=spectreematrix[countspec,i]+epsilonspectree[i]
+        }
+        countspec=countspec+1
         
         #want to simulate multiple genetrees for a given species tree
         genetreenum=-1
@@ -173,8 +187,6 @@ for(Ntips in c(rep(20000,21))){
                                                          include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
-          lttcountspec=castor::count_lineages_through_time(spectree,times=age_grid_sim,include_slopes = TRUE)
-          
           plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,21000))
           lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,21000))
           title("species tree/gene tree LTT")
@@ -184,16 +196,11 @@ for(Ntips in c(rep(20000,21))){
           
           
           ##plot epsilon over time
-          real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
           #xout shouldn;t depend on age_grid_sim, should be less
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
           # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           lambda_hat_p_prime_new=gene_PSR
           
-          #maybe should make a plot of the relative error between the PSRs of spectree and sim deterministic hbd 
-          lambda_hat_spectree=lttcountspec$relative_slopes
-          
-          epsilonspectree=(lambda_hat_spectree-real_lambda_hat)/real_lambda_hat
           
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
@@ -320,6 +327,9 @@ for(Ntips in c(rep(20000,21))){
           
           plot(y=realepsilonvalsnew,x=age_grid_sim)
           title("realepsilon vs. time")
+          
+          plot(y=epsilonspectree,x=age_grid_sim)
+          title("disparity between real/sim spec psr")
           
           invisible(dev.off());
           
