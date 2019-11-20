@@ -49,9 +49,17 @@ matrix100new=matrix(0,nrow=21*10/3,ncol=ncols)
 matrix10new=matrix(0,nrow=21*10/3,ncol=ncols)
 matrix1new=matrix(0,nrow=21*10/3,ncol=ncols)
 
+heatmapdataspectree=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdatanew)=colnamesstuff
+
+heatmapdataspectreenew=matrix(0,nrow=3,ncol=ncols)
+rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
+colnames(heatmapdatanew)=colnamesstuff
+
 ## Rvals are 10,100,1000
 #21-11 for ntipnumber
-for(Ntips in c(rep(20000,21))){
+for(Ntips in c(rep(100000,21))){
   Ntipnumber=Ntipnumber+1
   if(Ntipnumber%%3==0){
     max_val=100
@@ -71,9 +79,10 @@ for(Ntips in c(rep(20000,21))){
     sigma=.5
     lambdanumber=lambdanumber+1
     #get 9/10 value from age_grid_sim for lambdas
-    for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
+    # for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
+      for(mus in list(rep(0,length(age_grid_sim)))){
       munumber=munumber+1
-      tryCatch({
+      # tryCatch({
         sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=oldest_age_sim,rho=rho)
         
         
@@ -201,8 +210,8 @@ for(Ntips in c(rep(20000,21))){
                                                          include_slopes=TRUE, regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
-          plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,21000))
-          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,21000))
+          plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
+          lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
           title("species tree/gene tree LTT")
           
           # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
@@ -219,6 +228,8 @@ for(Ntips in c(rep(20000,21))){
           
           #spectreepdrpsr$PSR is very close to 0, need to use double precision?
           epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
+          
+          epsilonspectree=(lambda_hat_p_prime-lambda_hat_spectree)/lambda_hat_spectree
           
           NAend=1
           #|NAend==length(epsilon)
@@ -252,6 +263,8 @@ for(Ntips in c(rep(20000,21))){
           
           
           epsilonnew=(lambda_hat_p_prime_new-real_lambda_hat)/real_lambda_hat
+          
+          epsilonspectreenew=(lambda_hat_p_prime_new-lambda_hat_spectree)/lambda_hat_spectree
           
           NAend=1
           #|NAend==length(epsilon)
@@ -298,6 +311,17 @@ for(Ntips in c(rep(20000,21))){
               matrix100new[count100,i]=binnedepsilonsnew[i]
             }
             count100=count100+1
+            
+            for(i in 1:length(epsilonspectree)){
+              heatmapdataspectree[1,i]=heatmapdataspectree[1,i]+epsilonspectree[i]
+            
+            }
+            
+            for(i in 1:length(epsilonspectreenew)){
+              heatmapdataspectreenew[1,i]=heatmapdataspectreenew[1,i]+epsilonspectreenew[i]
+              
+            }
+            
           }else if(Ntipnumber%%3==1){
             for(i in 1:length(binnedepsilons)){
               heatmapdata[2,i]=heatmapdata[2,i]+binnedepsilons[i]
@@ -313,6 +337,17 @@ for(Ntips in c(rep(20000,21))){
               matrix10new[count10,i]=binnedepsilons[i]
             }
             count10=count10+1
+            
+            for(i in 1:length(epsilonspectree)){
+              heatmapdataspectree[2,i]=heatmapdataspectree[2,i]+epsilonspectree[i]
+              
+            }
+            
+            for(i in 1:length(epsilonspectreenew)){
+              heatmapdataspectreenew[2,i]=heatmapdataspectreenew[2,i]+epsilonspectreenew[i]
+              
+            }
+            
           }else {
             for(i in 1:length(binnedepsilons)){
               heatmapdata[3,i]=heatmapdata[3,i]+binnedepsilons[i]
@@ -328,6 +363,17 @@ for(Ntips in c(rep(20000,21))){
             }
             
             count1=count1+1
+            
+            for(i in 1:length(epsilonspectree)){
+              heatmapdataspectree[3,i]=heatmapdataspectree[3,i]+epsilonspectree[i]
+              
+            }
+            
+            for(i in 1:length(epsilonspectreenew)){
+              heatmapdataspectreenew[3,i]=heatmapdataspectreenew[3,i]+epsilonspectreenew[i]
+              
+            }
+            
           }
           file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".pdf",sep="")
           
@@ -370,7 +416,7 @@ for(Ntips in c(rep(20000,21))){
           setwd("..")
           
         }#close genetreeloop
-      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
+      # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
     }#close mus loop
   }#close lambdas loop
 }#close Ntips loop
@@ -403,11 +449,17 @@ par(mar=c(5.1, 4.1, 4.1, 4.1))
 plot(epsilonsdrealnew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 # title("sd epsilons new")
 
-par(mar=c(5.1, 4.1, 4.1, 4.1))
+par(mar=c(5.1, 5.1, 5.1, 5.1))
 plot(heatmapdatanew/(21*10/3),border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 #title("average epsilons new")
 
 par(mar=c(5.1, 5.1, 5.1, 5.1))
 plot(spectreematrix,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+
+par(mar=c(5.1, 5.1, 5.1, 5.1))
+plot(heatmapdataspectree,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+
+par(mar=c(5.1, 5.1, 5.1, 5.1))
+plot(heatmapdataspectreenew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 
 invisible(dev.off());
