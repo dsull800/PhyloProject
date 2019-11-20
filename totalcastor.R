@@ -134,6 +134,9 @@ for(Ntips in c(rep(100000,21))){
         plot(y=lambda_hat_spectree,x=age_grid_sim)
         invisible(dev.off());
         
+        file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".rds",sep="")
+        saveRDS(c(real_lambda_hat,lambda_hat_spectree),file)
+        
         setwd("..")
         
         for(i in 1:length(epsilonspectree)){
