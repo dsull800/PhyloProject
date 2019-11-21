@@ -1,4 +1,5 @@
 ##Something is wrong with the gene_PSR, need to account for crown_age=20 when making plots and doing other calculations
+#plots go from present at the left to past at the right
 
 require("castor")
 # require("ggplot2")
@@ -86,7 +87,7 @@ for(Ntips in c(rep(100000,21))){
   #     for(mus in list(rep(0,length(age_grid_sim)))){
   age2lambda	= function(ages) 0.1 + exp(-0.05*ages)
   age2mu		= function(ages) 0.1 + 1*exp(-(ages-5)^2/(2*0.5^2))
-  rho			= 0.5
+  rho			= .5
   crown_age	= 20
   lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
   
@@ -129,12 +130,12 @@ for(Ntips in c(rep(100000,21))){
                                                     rho0 = rho,
                                                     lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
         
-        lttcountspec=castor::count_lineages_through_time(spectree,times=lineagecountgrid,include_slopes = TRUE,regular_grid = TRUE)
+        lttcountspec=castor::count_lineages_through_time(spectree,times=lineagecountgrid,include_slopes = TRUE)
         
         #maybe should make a plot of the relative error between the PSRs of spectree and sim deterministic hbd 
         real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=lineagecountgrid,method="linear")$y
         
-        lambda_hat_spectree=lttcountspec$relative_slopes
+        lambda_hat_spectree=rev(lttcountspec$relative_slopes)
         
         epsilonspectree=(lambda_hat_spectree-real_lambda_hat)/real_lambda_hat
         
@@ -241,7 +242,7 @@ for(Ntips in c(rep(100000,21))){
           #xout shouldn;t depend on age_grid_sim, should be less
           lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=lineagecountgrid,method="linear")$y
           # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
-          lambda_hat_p_prime_new=gene_PSR
+          lambda_hat_p_prime_new=rev(gene_PSR)
           
           
           
