@@ -1,3 +1,5 @@
+##Something is wrong with the gene_PSR, need to account for crown_age=20 when making plots and doing other calculations
+
 require("castor")
 # require("ggplot2")
 # require("stats")
@@ -6,6 +8,7 @@ require("plot.matrix")
 require("matrixStats")
 require("naniar")
 
+setwd('~/Desktop/PhyloProject-master')
 
 # dir.create("gentrees")
 # dir.create("fitpsrs")
@@ -22,7 +25,7 @@ count100=1
 count10=1
 count1=1
 countspec=1
-oldest_age_sim=10
+oldest_age_sim=1000
 #decreasefineness to decrease finite diff errors?
 age_grid_fineness=.1
 ncols=oldest_age_sim/age_grid_fineness+1
@@ -73,17 +76,26 @@ for(Ntips in c(rep(100000,21))){
   
   age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
   # ln(max_tips)/(lambda-mu)
-  lambda1 = exp(0.5*age_grid_sim)
-  for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
-    A=1.1*lambdas[floor(length(age_grid_sim)/2)]
-    sigma=.5
+  # lambda1 = exp(0.5*age_grid_sim)
+  # for(lambdas in list(((max_val/2)/tail(lambda1,1))*lambda1+max_val/2)){
+  #   A=1.1*lambdas[floor(length(age_grid_sim)/2)]
+  #   sigma=.5
+  #   lambdanumber=lambdanumber+1
+  #   #get 9/10 value from age_grid_sim for lambdas
+  #   # for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
+  #     for(mus in list(rep(0,length(age_grid_sim)))){
+  age2lambda	= function(ages) 0.1 + exp(-0.05*ages)
+  age2mu		= function(ages) 0.1 + 1*exp(-(ages-5)^2/(2*0.5^2))
+  rho			= 0.5
+  crown_age	= 20
+  lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
+  
+  for(lambdas in list(age2lambda(age_grid_sim))){
     lambdanumber=lambdanumber+1
-    #get 9/10 value from age_grid_sim for lambdas
-    # for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
-      for(mus in list(rep(0,length(age_grid_sim)))){
+    for(mus in list(age2mu(age_grid_sim))){
       munumber=munumber+1
       # tryCatch({
-        sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=oldest_age_sim,rho=rho)
+        sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=crown_age,rho=rho)
         
         
         ###ALL UNITS ARE IN MEGAYEARS
@@ -111,16 +123,16 @@ for(Ntips in c(rep(100000,21))){
         mus_on_age_grid = mus
         # if extinction is 0 why isn;t sim$final_time=root_age? Could I just calculate this once and then store it?
         spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
-                                                    oldest_age = oldest_age_sim,
+                                                    oldest_age = crown_age,
                                                     age0=0,
                                                     age_grid=age_grid_sim,
                                                     rho0 = rho,
                                                     lambda=lambdas_on_age_grid,mu=mus_on_age_grid)
         
-        lttcountspec=castor::count_lineages_through_time(spectree,times=age_grid_sim,include_slopes = TRUE)
+        lttcountspec=castor::count_lineages_through_time(spectree,times=lineagecountgrid,include_slopes = TRUE,regular_grid = TRUE)
         
         #maybe should make a plot of the relative error between the PSRs of spectree and sim deterministic hbd 
-        real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=age_grid_sim,method="linear")$y
+        real_lambda_hat=approx(x=spectreepdrpsr$ages,y=spectreepdrpsr$PSR,xout=lineagecountgrid,method="linear")$y
         
         lambda_hat_spectree=lttcountspec$relative_slopes
         
@@ -130,8 +142,8 @@ for(Ntips in c(rep(100000,21))){
         
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".pdf",sep="")
         pdf(file=file, width=5, height=5)
-        plot(y=real_lambda_hat,x=age_grid_sim)
-        plot(y=lambda_hat_spectree,x=age_grid_sim)
+        plot(y=real_lambda_hat,x=lineagecountgrid)
+        plot(y=lambda_hat_spectree,x=lineagecountgrid)
         invisible(dev.off());
         
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".rds",sep="")
@@ -165,9 +177,9 @@ for(Ntips in c(rep(100000,21))){
           
           Ngrid = 10
           
-          psr_age_grid = seq(from=0,to=oldest_age_sim,length.out=Ngrid)
+          psr_age_grid = seq(from=0,to=crown_age,length.out=Ngrid)
           fit = fit_hbd_psr_on_grid(gentree,
-                                    oldest_age = oldest_age_sim,
+                                    oldest_age = crown_age,
                                     age_grid = psr_age_grid,
                                     age0=0,
                                     min_PSR = -50,
@@ -187,8 +199,9 @@ for(Ntips in c(rep(100000,21))){
                   main = 'Fitted PSR',
                   xlab = 'age',
                   ylab = 'PSR',
-                  type = 'b',
-                  xlim = c(oldest_age_sim,0))
+                  type = 'b'
+                  # xlim = c(oldest_age_sim,0)
+                  )
             # plot deterministic LTT of fitted model, something is weird with the values/plot?
             plot( x = fit[["age_grid"]],
                   y = fit[["fitted_LTT"]],
@@ -196,8 +209,9 @@ for(Ntips in c(rep(100000,21))){
                   xlab = 'age',
                   ylab = 'lineages',
                   type = 'b',
-                  log = 'y',
-                  xlim = c(oldest_age_sim,0))
+                  log = 'y'
+                  # xlim = c(oldest_age_sim,0)
+                  )
           }
           
           NGtips = length(gentree$tip.label)
@@ -205,12 +219,14 @@ for(Ntips in c(rep(100000,21))){
           #for max_time use oldest age_sim because all we need to fit is time that species trees exists
           root_age = castor::get_tree_span(spectree)[["max_distance"]]
           root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
-          distancebetween=root_age_gene_tree-root_age
+          # distancebetween=root_age_gene_tree-root_age
+          distancebetween=0
           #need to increase fineness of times so that finite difference errors are mitigated, actually need to remove dependence on age_grid_sim
           gene_LTT = castor::count_lineages_through_time(gentree, 
                                                          # max_time=oldest_age_sim, Ntimes=length(oldest_age_sim), 
-                                                         times=distancebetween+age_grid_sim,
-                                                         include_slopes=TRUE, regular_grid=TRUE)
+                                                         times=lineagecountgrid,
+                                                         include_slopes=TRUE, 
+                                                         regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
           plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
@@ -223,7 +239,7 @@ for(Ntips in c(rep(100000,21))){
           
           ##plot epsilon over time
           #xout shouldn;t depend on age_grid_sim, should be less
-          lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=age_grid_sim,method="linear")$y
+          lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=lineagecountgrid,method="linear")$y
           # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
           lambda_hat_p_prime_new=gene_PSR
           
@@ -296,6 +312,8 @@ for(Ntips in c(rep(100000,21))){
           
           
           realepsilonagesnew=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
+          
+          # binnedepsilonsnew=realepsilonvalsnew
           
           binnedepsilonsnew=realepsilonvalsnew
           
@@ -384,14 +402,14 @@ for(Ntips in c(rep(100000,21))){
           ##changeworking DIRECTORY
           setwd("storedplots")
           pdf(file=file, width=5, height=5)
-          plot(y=realepsilonvals,x=age_grid_sim)
+          plot(y=realepsilonvals,x=lineagecountgrid)
           title("epsilon vs. time")
           
           
-          plot(y=realepsilonvalsnew,x=age_grid_sim)
+          plot(y=realepsilonvalsnew,x=lineagecountgrid)
           title("realepsilon vs. time")
           
-          plot(y=epsilonspectree,x=age_grid_sim)
+          plot(y=epsilonspectree,x=lineagecountgrid)
           title("disparity between real/sim spec psr")
           
           invisible(dev.off());
@@ -466,3 +484,5 @@ par(mar=c(5.1, 5.1, 5.1, 5.1))
 plot(heatmapdataspectreenew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
 
 invisible(dev.off());
+
+setwd("..")
