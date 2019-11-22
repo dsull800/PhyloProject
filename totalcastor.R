@@ -66,12 +66,14 @@ colnames(heatmapdatanew)=colnamesstuff
 for(Ntips in c(rep(100000,21))){
   Ntipnumber=Ntipnumber+1
   if(Ntipnumber%%3==0){
-    max_val=100
+    # max_val=100
+    max_val=10^-1
   }else if(Ntipnumber%%3==1){
-    max_val=10
+    # max_val=10
+    max_val=10^-1
   }else {
     # changed from 1 to be very small so that there isn't any ILS
-    max_val=10^-3
+    max_val=10^-1
   }
   
   
@@ -85,8 +87,8 @@ for(Ntips in c(rep(100000,21))){
   #   #get 9/10 value from age_grid_sim for lambdas
   #   # for(mus in list(A*exp(-(age_grid_sim-age_grid_sim[floor(length(age_grid_sim)/2)])^2/(2*sigma^2)))){
   #     for(mus in list(rep(0,length(age_grid_sim)))){
-  age2lambda	= function(ages) 0.1 + exp(-0.05*ages)
-  age2mu		= function(ages) 0.1 + 1*exp(-(ages-5)^2/(2*0.5^2))
+  age2lambda	= function(ages) max_val + exp(-0.05*ages)
+  age2mu		= function(ages) max_val + 1*exp(-(ages-5)^2/(2*0.5^2))
   rho			= .5
   crown_age	= 20
   lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
@@ -96,6 +98,7 @@ for(Ntips in c(rep(100000,21))){
     for(mus in list(age2mu(age_grid_sim))){
       munumber=munumber+1
       # tryCatch({
+      #I am not sure that this function is the right one to use for generating trees, need to worry too much about how to set crown age for an arbitrary lambda/mu
         sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=crown_age,rho=rho)
         
         
@@ -143,8 +146,8 @@ for(Ntips in c(rep(100000,21))){
         
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".pdf",sep="")
         pdf(file=file, width=5, height=5)
-        plot(y=real_lambda_hat,x=lineagecountgrid)
-        plot(y=lambda_hat_spectree,x=lineagecountgrid)
+        plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(0,1))
+        plot(y=lambda_hat_spectree,x=lineagecountgrid,ylim=c(0,1))
         invisible(dev.off());
         
         file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".rds",sep="")
@@ -220,16 +223,16 @@ for(Ntips in c(rep(100000,21))){
           #for max_time use oldest age_sim because all we need to fit is time that species trees exists
           root_age = castor::get_tree_span(spectree)[["max_distance"]]
           root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
-          # distancebetween=root_age_gene_tree-root_age
-          distancebetween=0
+          distancebetween=root_age_gene_tree-root_age
           #need to increase fineness of times so that finite difference errors are mitigated, actually need to remove dependence on age_grid_sim
           gene_LTT = castor::count_lineages_through_time(gentree, 
                                                          # max_time=oldest_age_sim, Ntimes=length(oldest_age_sim), 
-                                                         times=lineagecountgrid,
+                                                         times=lineagecountgrid+distancebetween,
                                                          include_slopes=TRUE, 
                                                          regular_grid=TRUE)
           gene_PSR = gene_LTT$relative_slopes
           
+          #this plot goes from past to present, reverse of what is standard in the rest of the code
           plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
           lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
           title("species tree/gene tree LTT")
@@ -313,8 +316,6 @@ for(Ntips in c(rep(100000,21))){
           
           
           realepsilonagesnew=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
-          
-          # binnedepsilonsnew=realepsilonvalsnew
           
           binnedepsilonsnew=realepsilonvalsnew
           
