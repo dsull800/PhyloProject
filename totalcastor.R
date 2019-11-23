@@ -82,7 +82,6 @@ for(Ntips in c(rep(100000,21))){
   age2mu		= function(ages) max_val + 1*exp(-(ages-5)^2/(2*0.5^2))
   rho			= .5
   # crown_age	= 20
-  lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
   
   for(lambdas in list(age2lambda(age_grid_sim))){
     lambdanumber=lambdanumber+1
@@ -91,14 +90,16 @@ for(Ntips in c(rep(100000,21))){
       # tryCatch({
       #I am not sure that this function is the right one to use for generating trees, need to worry too much about how to set crown age for an arbitrary lambda/mu
       
-      findcrownage = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
+      findcrownage = simulate_deterministic_hbd(LTT0 = Ntips,
                                                   oldest_age = oldest_age_sim,
                                                   age0=0,
                                                   age_grid=age_grid_sim,
                                                   rho0 = rho,
                                                   lambda=lambdas,mu=mus)
       
-      crown_age=min(findcrown_age$ages[findcrownage$LTT==1])
+      crown_age=min(findcrownage$ages[findcrownage$LTT==100])
+      
+      lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
       
       
         sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=crown_age,rho=rho)
