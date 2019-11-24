@@ -194,3 +194,5 @@ Use HMM to go along genome and identify regions that were horizontally transferr
 need to solve dN/dt=N(\lambda-\mu)) for N as a function of time, then can set grid to be that time where N=100000 and generate trees.
 
 change linagecountgrid to go to 5 instead of 20 and increase the fineness
+
+save the workspace at the end so that matrices are still there
