@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+for item in {1..2}
+do 
+	wrkdir="/Users/danielsullivan/Desktop/scriptingtest/script${item}"
+	cd ${wrkdir}
+	scriptname="script${item}.R"
+	Rscript ${scriptname}
+done
+
+
