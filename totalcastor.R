@@ -1,22 +1,18 @@
 ##Something is wrong with the gene_PSR, need to account for crown_age=20 when making plots and doing other calculations
 #plots go from present at the left to past at the right
 
+#If very large trees are deterministic, should I only simulate one species tree for given R value?
+
 require("castor")
-# require("ggplot2")
-# require("stats")
 require("prospectr")
 require("plot.matrix")
 require("matrixStats")
 require("naniar")
-
-setwd('~/Desktop/PhyloProject-master')
-
-# dir.create("gentrees")
-# dir.create("fitpsrs")
-# dir.create("spectreeinfo")
-# dir.create("epsilonvals")
-# dir.create("epsilonsd")
-# dir.create("spectrees")
+overallcount=0
+for(age2lambda in c(function(ages,max_val) rep(max_val,length(age_grid_sim)))){
+  for(age2mu in c(function(ages,max_val) rep(0,length(age_grid_sim)))){
+    overallcount=overallcount+1
+    # setwd(paste("users/danielsullivan/desktop/phylobashscripts",toString(overallcount)))
 
 lambdanumber=-1
 munumber=-1
@@ -67,10 +63,10 @@ for(Ntips in c(rep(100000,21))){
   Ntipnumber=Ntipnumber+1
   if(Ntipnumber%%3==0){
     # max_val=100
-    max_val=10^-1
+    max_val=10
   }else if(Ntipnumber%%3==1){
     # max_val=10
-    max_val=10^-1
+    max_val=1
   }else {
     # changed from 1 to be very small so that there isn't any ILS
     max_val=10^-1
@@ -78,14 +74,12 @@ for(Ntips in c(rep(100000,21))){
   
   
   age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
-  age2lambda	= function(ages) max_val + exp(-0.05*ages)
-  age2mu		= function(ages) max_val + 1*exp(-(ages-5)^2/(2*0.5^2))
   rho			= .5
   # crown_age	= 20
   
-  for(lambdas in list(age2lambda(age_grid_sim))){
+  for(lambdas in list(age2lambda(age_grid_sim,max_val))){
     lambdanumber=lambdanumber+1
-    for(mus in list(age2mu(age_grid_sim))){
+    for(mus in list(age2mu(age_grid_sim,max_val))){
       munumber=munumber+1
       # tryCatch({
       #I am not sure that this function is the right one to use for generating trees, need to worry too much about how to set crown age for an arbitrary lambda/mu
@@ -99,7 +93,7 @@ for(Ntips in c(rep(100000,21))){
       
       crown_age=max(findcrownage$ages[findcrownage$LTT>=1 & findcrownage$LTT<=10])
       
-      lineagecountgrid=seq(from=0,to=crown_age,by=age_grid_fineness)
+      lineagecountgrid=seq(from=0,to=1,length.out=1000)
       
       
       sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=crown_age,rho=rho)
@@ -111,14 +105,8 @@ for(Ntips in c(rep(100000,21))){
       spectree = sim$trees[[1]]
       root_age = castor::get_tree_span(spectree)[["max_distance"]]
       cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
-      # ape::plot.phylo(spectree)
-      # title("speciestree")
-      
-      Nnodes=spectree$Nnode
       
       
-      nspecies=length(spectree$tip.label)
-      # Ntipnumber was ntips in old simulation
       file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
       setwd("spectrees")
       file.create(file)
@@ -146,8 +134,8 @@ for(Ntips in c(rep(100000,21))){
       
       file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".pdf",sep="")
       pdf(file=file, width=5, height=5)
-      plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(0,1))
-      plot(y=lambda_hat_spectree,x=lineagecountgrid,ylim=c(0,1))
+      plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
+      plot(y=lambda_hat_spectree,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
       invisible(dev.off());
       
       file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".rds",sep="")
@@ -168,14 +156,9 @@ for(Ntips in c(rep(100000,21))){
         genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
                                                population_sizes = 10^8,
                                                generation_times = 10^-7,
-                                               #runif(nspecies+Nnodes,min = 0.001,max=1) runif(nspecies+Nnodes,min = 10^8,max=10^9)
                                                ploidy = 1);
         
         gentree=genetreestuff$tree
-        
-        # ape::plot.phylo(gentree)
-        # title("genetree")
-        
         
         # Fit PSR on grid
         
@@ -218,9 +201,6 @@ for(Ntips in c(rep(100000,21))){
           )
         }
         
-        NGtips = length(gentree$tip.label)
-        # gene_root_age = castor::get_tree_span(gentree)$max_distance
-        #for max_time use oldest age_sim because all we need to fit is time that species trees exists
         root_age = castor::get_tree_span(spectree)[["max_distance"]]
         root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
         distancebetween=root_age_gene_tree-root_age
@@ -244,94 +224,27 @@ for(Ntips in c(rep(100000,21))){
         ##plot epsilon over time
         #xout shouldn;t depend on age_grid_sim, should be less
         lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=lineagecountgrid,method="linear")$y
-        # lambda_hat_p_prime_new=approx(x=gene_LTT$times-distancebetween,y=gene_PSR,xout=age_grid_sim,method="linear")$y
         lambda_hat_p_prime_new=rev(gene_PSR)
-        
-        
         
         #spectreepdrpsr$PSR is very close to 0, need to use double precision?
         epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
         
-        epsilonspectree=(lambda_hat_p_prime-lambda_hat_spectree)/lambda_hat_spectree
-        
-        NAend=1
-        #|NAend==length(epsilon)
-        while(is.na(epsilon[NAend])){
-          
-          NAend=NAend+1
-          
-        }
-        
-        almostrealepsilonvals=epsilon[NAend:length(epsilon)]
-        
-        NAend2=1
-        # |NAend2==length(almostrealepsilonvals)
-        while(!is.na(almostrealepsilonvals[NAend2])){
-          
-          NAend2=NAend2+1
-          
-        }
-        
-        realepsilonvals=almostrealepsilonvals[1:NAend2-1]
-        
-        if(any_na(realepsilonvals)){
-          print(file)
-          print("this one has NA realepislonvals")
-        }
-        
-        
-        realepsilonages=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
-        
-        binnedepsilons=realepsilonvals
-        
-        
         epsilonnew=(lambda_hat_p_prime_new-real_lambda_hat)/real_lambda_hat
         
-        epsilonspectreenew=(lambda_hat_p_prime_new-lambda_hat_spectree)/lambda_hat_spectree
-        
-        NAend=1
-        #|NAend==length(epsilon)
-        while(is.na(epsilonnew[NAend])){
-          
-          NAend=NAend+1
-          
-        }
-        
-        almostrealepsilonvalsnew=epsilonnew[NAend:length(epsilon)]
-        
-        NAend2=1
-        # |NAend2==length(almostrealepsilonvals)
-        while(!is.na(almostrealepsilonvalsnew[NAend2])){
-          
-          NAend2=NAend2+1
-          
-        }
-        
-        realepsilonvalsnew=almostrealepsilonvalsnew[1:NAend2-1]
-        
-        if(any_na(realepsilonvalsnew)){
-          print(file)
-          print("this one has NA realepislonvalsnew")
-        }
-        
-        
-        realepsilonagesnew=spectreepdrpsr$ages[NAend:NAend2-1]/spectreepdrpsr$ages[NAend2-1]
-        
-        binnedepsilonsnew=realepsilonvalsnew
         
         #need to figure out what to divide by to normalize
         if(Ntipnumber%%3==0){
-          for(i in 1:length(binnedepsilons)){
-            heatmapdata[1,i]=heatmapdata[1,i]+binnedepsilons[i]
+          for(i in 1:length(epsilon)){
+            heatmapdata[1,i]=heatmapdata[1,i]+epsilon[i]
             
-            matrix100[count100,i]=binnedepsilons[i]
+            matrix100[count100,i]=epsilon[i]
             
           }
           
-          for(i in 1:length(binnedepsilonsnew)){
-            heatmapdatanew[1,i]=heatmapdatanew[1,i]+binnedepsilonsnew[i]
+          for(i in 1:length(epsilonnew)){
+            heatmapdatanew[1,i]=heatmapdatanew[1,i]+epsilonnew[i]
             
-            matrix100new[count100,i]=binnedepsilonsnew[i]
+            matrix100new[count100,i]=epsilonnew[i]
           }
           count100=count100+1
           
@@ -340,24 +253,19 @@ for(Ntips in c(rep(100000,21))){
             
           }
           
-          for(i in 1:length(epsilonspectreenew)){
-            heatmapdataspectreenew[1,i]=heatmapdataspectreenew[1,i]+epsilonspectreenew[i]
-            
-          }
-          
         }else if(Ntipnumber%%3==1){
-          for(i in 1:length(binnedepsilons)){
-            heatmapdata[2,i]=heatmapdata[2,i]+binnedepsilons[i]
+          for(i in 1:length(epsilon)){
+            heatmapdata[2,i]=heatmapdata[2,i]+epsilon[i]
             
-            matrix10[count10,i]=binnedepsilons[i]
+            matrix10[count10,i]=epsilon[i]
             
             
           }
           
-          for(i in 1:length(binnedepsilonsnew)){
-            heatmapdatanew[2,i]=heatmapdatanew[2,i]+binnedepsilonsnew[i]
+          for(i in 1:length(epsilonnew)){
+            heatmapdatanew[2,i]=heatmapdatanew[2,i]+epsilonnew[i]
             
-            matrix10new[count10,i]=binnedepsilons[i]
+            matrix10new[count10,i]=epsilon[i]
           }
           count10=count10+1
           
@@ -366,34 +274,25 @@ for(Ntips in c(rep(100000,21))){
             
           }
           
-          for(i in 1:length(epsilonspectreenew)){
-            heatmapdataspectreenew[2,i]=heatmapdataspectreenew[2,i]+epsilonspectreenew[i]
-            
-          }
           
         }else {
-          for(i in 1:length(binnedepsilons)){
-            heatmapdata[3,i]=heatmapdata[3,i]+binnedepsilons[i]
+          for(i in 1:length(epsilon)){
+            heatmapdata[3,i]=heatmapdata[3,i]+epsilon[i]
             
-            matrix1[count1,i]=binnedepsilons[i]
+            matrix1[count1,i]=epsilon[i]
             
             
           }
-          for(i in 1:length(binnedepsilonsnew)){
-            heatmapdatanew[3,i]=heatmapdatanew[3,i]+binnedepsilonsnew[i]
+          for(i in 1:length(epsilonnew)){
+            heatmapdatanew[3,i]=heatmapdatanew[3,i]+epsilonnew[i]
             
-            matrix1new[count1,i]=binnedepsilonsnew[i]
+            matrix1new[count1,i]=epsilonnew[i]
           }
           
           count1=count1+1
           
           for(i in 1:length(epsilonspectree)){
             heatmapdataspectree[3,i]=heatmapdataspectree[3,i]+epsilonspectree[i]
-            
-          }
-          
-          for(i in 1:length(epsilonspectreenew)){
-            heatmapdataspectreenew[3,i]=heatmapdataspectreenew[3,i]+epsilonspectreenew[i]
             
           }
           
@@ -404,15 +303,15 @@ for(Ntips in c(rep(100000,21))){
         ##changeworking DIRECTORY
         setwd("storedplots")
         pdf(file=file, width=5, height=5)
-        plot(y=realepsilonvals,x=lineagecountgrid)
+        plot(y=epsilon,x=lineagecountgrid)
         title("epsilon vs. time")
         
         
-        plot(y=realepsilonvalsnew,x=lineagecountgrid)
+        plot(y=epsilonnew,x=lineagecountgrid)
         title("realepsilon vs. time")
         
-        plot(y=epsilonspectree,x=lineagecountgrid)
-        title("disparity between real/sim spec psr")
+        plot(y=lambda_hat_p_prime_new,x=lineagecountgrid)
+        title("GENE PSR")
         
         invisible(dev.off());
         
@@ -434,7 +333,7 @@ for(Ntips in c(rep(100000,21))){
         
         setwd("../epsilonvals")
         
-        saveRDS(binnedepsilons,file)
+        saveRDS(epsilon,file)
         
         setwd("..")
         
@@ -487,4 +386,9 @@ plot(heatmapdataspectreenew,border=NA,col=hcl.colors(50, palette = "viridis", al
 
 invisible(dev.off());
 
+save.image()
+
 setwd("..")
+
+  }
+}
