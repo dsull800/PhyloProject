@@ -48,14 +48,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     matrix100new=matrix(0,nrow=21*10/3,ncol=ncols)
     matrix10new=matrix(0,nrow=21*10/3,ncol=ncols)
     matrix1new=matrix(0,nrow=21*10/3,ncol=ncols)
-    
-    heatmapdataspectree=matrix(0,nrow=3,ncol=ncols)
-    rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
-    colnames(heatmapdatanew)=colnamesstuff
-    
-    heatmapdataspectreenew=matrix(0,nrow=3,ncol=ncols)
-    rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
-    colnames(heatmapdatanew)=colnamesstuff
+  
     
     ## Rvals are 10,100,1000
     #21-11 for ntipnumber
@@ -246,11 +239,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
                 matrix100new[count100,i]=epsilonnew[i]
               }
               count100=count100+1
-              
-              for(i in 1:length(epsilonspectree)){
-                heatmapdataspectree[1,i]=heatmapdataspectree[1,i]+epsilonspectree[i]
-                
-              }
+
               
             }else if(Ntipnumber%%3==1){
               for(i in 1:length(epsilon)){
@@ -268,10 +257,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
               }
               count10=count10+1
               
-              for(i in 1:length(epsilonspectree)){
-                heatmapdataspectree[2,i]=heatmapdataspectree[2,i]+epsilonspectree[i]
-                
-              }
               
               
             }else {
@@ -290,10 +275,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
               
               count1=count1+1
               
-              for(i in 1:length(epsilonspectree)){
-                heatmapdataspectree[3,i]=heatmapdataspectree[3,i]+epsilonspectree[i]
-                
-              }
               
             }
             file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".pdf",sep="")
@@ -376,13 +357,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     
     par(mar=c(5.1, 5.1, 5.1, 5.1))
     plot(spectreematrix,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
-    
-    par(mar=c(5.1, 5.1, 5.1, 5.1))
-    plot(heatmapdataspectree,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
-    
-    par(mar=c(5.1, 5.1, 5.1, 5.1))
-    plot(heatmapdataspectreenew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
-    
+
     invisible(dev.off());
     
     save.image()
