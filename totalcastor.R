@@ -189,15 +189,18 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
               )
             }
             
+            #compute distance between to get values from gene tree for comparisons
             root_age = castor::get_tree_span(spectree)[["max_distance"]]
             root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
             distancebetween=root_age_gene_tree-root_age
-            #need to increase fineness of times so that finite difference errors are mitigated, actually need to remove dependence on age_grid_sim
+          
+            #get genePSR as function of time
             gene_LTT = castor::count_lineages_through_time(gentree, 
                                                            # max_time=oldest_age_sim, Ntimes=length(oldest_age_sim), 
                                                            times=lineagecountgrid+distancebetween,
                                                            include_slopes=TRUE, 
                                                            regular_grid=TRUE)
+            #make genePSR as function of age
             gene_PSR = gene_LTT$relative_slopes
             
             #this plot goes from past to present, reverse of what is standard in the rest of the code
@@ -209,18 +212,19 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             # --> lttcountspec$relative_slopes[] is synchronized with ages[] = root_age - lttcountspec$times[]
             
             
-            ##plot epsilon over time
-            #xout shouldn;t depend on age_grid_sim, should be less
+            #get lambdahatpprime values for later
+            
             lambda_hat_p_prime=approx(x=fit[["age_grid"]],y=fit[["fitted_PSR"]],xout=lineagecountgrid,method="linear")$y
             lambda_hat_p_prime_new=rev(gene_PSR)
             
-            #spectreepdrpsr$PSR is very close to 0, need to use double precision?
+            #compute epsilon values 
             epsilon=(lambda_hat_p_prime-real_lambda_hat)/real_lambda_hat
             
             epsilonnew=(lambda_hat_p_prime_new-real_lambda_hat)/real_lambda_hat
             
             
-            #need to figure out what to divide by to normalize
+            # create matrices of epsilon values
+            
             if(Ntipnumber%%3==0){
               for(i in 1:length(epsilon)){
                 heatmapdata[1,i]=heatmapdata[1,i]+epsilon[i]
@@ -275,8 +279,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             }
             file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
             
-            #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
-            ##changeworking DIRECTORY
+           # save plots of epsilon vs age and gene PSR
             setwd("storedplots")
             pdf(file=file, width=5, height=5)
             plot(y=epsilon,x=lineagecountgrid)
@@ -291,7 +294,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             
             invisible(dev.off());
             
-            ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
+           # save information to files in certain directories
             file=paste(Ntipnumber,"_",genetreenum,".txt",sep="")
             setwd("../gentrees")
             file.create(file)
@@ -319,18 +322,24 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
       }#close lambdas loop
     }#close Ntips loop
     
+    
+    #create mtrix of standard devations of epsilon values for fit PSR
     epsilonsd100=colSds(matrix100)
     epsilonsd10=colSds(matrix10)
     epsilonsd1=colSds(matrix1)
     
     epsilonsdreal=rbind(epsilonsd100,epsilonsd10,epsilonsd1)
     
+    
+    #create matrix of standard deviations of epsilon values for deterministic PSR
     epsilonsd100new=colSds(matrix100new)
     epsilonsd10new=colSds(matrix10new)
     epsilonsd1new=colSds(matrix1new)
     
     epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
     
+    
+    #create and plot matrices
     setwd("matrixplots")
     file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
     pdf(file=file, width=5, height=5)
