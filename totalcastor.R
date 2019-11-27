@@ -9,28 +9,28 @@ require("plot.matrix")
 require("matrixStats")
 require("naniar")
 overallcount=0
+#loop through functions for different scenarios
 for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/max(ages)))){
   for(age2mu in c(function(ages) rep(0,length(ages)), function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)))){
     overallcount=overallcount+1
+    #set working directory depedning on loop variable
     setwd(paste("/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv",toString(overallcount),sep=""))
-    
-    lambdanumber=-1
-    munumber=-1
-    Ntipnumber=-1
-    rho = 1 # sampling fraction
+    #set some loop variables for matrices and variables for grids
     count100=1
     count10=1
     count1=1
     countspec=1
     oldest_age_sim=1000
-    #decreasefineness to decrease finite diff errors?
+    #set fineness of age grid
     age_grid_fineness=.1
+    #make column names for matrices
     ncols=oldest_age_sim/age_grid_fineness+1
     colnamesstuff=c()
     for(i in seq(1,ncols)){
       inter_val=toString(i/ncols)
       colnamesstuff=c(colnamesstuff,inter_val)
     }
+    #create matrices for storing info
     heatmapdata=matrix(0,nrow=3,ncol=ncols)
     rownames(heatmapdata)=c("max_val 100","max_val 10","max_val 1")
     colnames(heatmapdata)=colnamesstuff
@@ -48,33 +48,29 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     matrix100new=matrix(0,nrow=21*10/3,ncol=ncols)
     matrix10new=matrix(0,nrow=21*10/3,ncol=ncols)
     matrix1new=matrix(0,nrow=21*10/3,ncol=ncols)
-  
+    #initialize loop variable
+    Ntipnumber=-1
     
-    ## Rvals are 10,100,1000
-    #21-11 for ntipnumber
     for(Ntips in c(rep(100000,21))){
       Ntipnumber=Ntipnumber+1
       if(Ntipnumber%%3==0){
-        # max_val=100
+     
         max_val=10
       }else if(Ntipnumber%%3==1){
-        # max_val=10
+       
         max_val=1
       }else {
-        # changed from 1 to be very small so that there isn't any ILS
+   
         max_val=10^-1
       }
       
-      
+      #set age grid and rho
       age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
       rho			= .5
-      
+      #simulate trees
       for(lambdas in list(age2lambda(age_grid_sim))){
-        lambdanumber=lambdanumber+1
         for(mus in list(age2mu(age_grid_sim))){
-          munumber=munumber+1
           # tryCatch({
-          #I am not sure that this function is the right one to use for generating trees, need to worry too much about how to set crown age for an arbitrary lambda/mu
           
           findcrownage = simulate_deterministic_hbd(LTT0 = Ntips,
                                                     oldest_age = oldest_age_sim,
@@ -99,7 +95,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
           cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
           
           
-          file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,".txt",sep="")
+          file=paste(Ntipnumber,"_",".txt",sep="")
           setwd("spectrees")
           file.create(file)
           write_tree(spectree,file)
@@ -124,13 +120,13 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
           
           setwd("lambdaplots")
           
-          file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".pdf",sep="")
+          file=paste(Ntipnumber,".pdf",sep="")
           pdf(file=file, width=5, height=5)
           plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
           plot(y=lambda_hat_spectree,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
           invisible(dev.off());
           
-          file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",".rds",sep="")
+          file=paste(Ntipnumber,".rds",sep="")
           saveRDS(c(real_lambda_hat,lambda_hat_spectree),file)
           
           setwd("..")
@@ -277,7 +273,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
               
               
             }
-            file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".pdf",sep="")
+            file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
             
             #linear epsilon graph artifact of approx linear interp? when set to constant, epsilon graph is constant, so maybe
             ##changeworking DIRECTORY
@@ -296,14 +292,14 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             invisible(dev.off());
             
             ### I need to write information to file for each run, I need to index file name by index. Need to include newick strings for gene and species trees, and maybe fitted values for the pdr/psr.
-            file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".txt",sep="")
+            file=paste(Ntipnumber,"_",genetreenum,".txt",sep="")
             setwd("../gentrees")
             file.create(file)
             write_tree(gentree,file)
             
             setwd("../fitpsrs")
             
-            file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".rds",sep="")
+            file=paste(Ntipnumber,"_",genetreenum,".rds",sep="")
             
             saveRDS(fit,file)
             
@@ -336,7 +332,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     epsilonsdrealnew=rbind(epsilonsd100new,epsilonsd10new,epsilonsd1new)
     
     setwd("matrixplots")
-    file=paste(munumber,"_",Ntipnumber,"_",lambdanumber%%4,"_",munumber%%3,"_",genetreenum,".pdf",sep="")
+    file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
     pdf(file=file, width=5, height=5)
     
     par(mar=c(5.1, 4.1, 4.1, 4.1))
