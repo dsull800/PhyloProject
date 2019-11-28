@@ -4,7 +4,7 @@ require("plot.matrix")
 require("matrixStats")
 require("naniar")
 
-overallcount=0
+funcnumber=0
 
 wrkdir="/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv"
 
@@ -13,8 +13,6 @@ oldest_age_sim=1000
 lineagecount=100
 #set fineness of age grid
 age_grid_fineness=.1
-#make column names for matrices
-rho			= .5
 #more varibales for column names
 ncols=lineagecount
 colnamesstuff=c()
@@ -24,19 +22,32 @@ for(i in seq(1,ncols)){
 }
 # vector of R values
 Rvec=c(10^-1,1,10)
+#vector of rho values
+rhovec=c(1,.5)
 #number of spectrees to generate
 numberofspec=7
 #number of gene trees to generate for each species tree
 numberofgen=10
 
 #loop through functions for different scenarios
-for(age2lambda in c(function(ages) rep(1,length(ages)))){
-  for(age2mu in c(function(ages) rep(0,length(ages)), function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)))){
-    overallcount=overallcount+1
-    #set working directory depedning on loop variable
-    if(!dir.exists(paste(wrkdir,toString(overallcount),sep=""))){
-      dir.create(paste(wrkdir,toString(overallcount),sep=""))
-      setwd(paste(wrkdir,toString(overallcount),sep=""))
+for(age2lambda in c(function(ages) rep(1,length(ages)),
+                    function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
+                    function(ages) function(ages) 0.1 + 0.9*exp(-0.05*ages),
+                    function(ages) 0.7 + 0.3*exp(0.05*ages))){
+                                            
+  
+  for(age2mu in c(function(ages) rep(0,length(ages)), 
+                  function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
+                  function(ages) 0.1 + 0.3*exp(-0.05*ages),
+                  function(ages) 0.1 + 0.3*exp(0.05*ages))){
+    funcnumber=funcnumber+1
+    
+    for(rho in rhovec){
+    
+    #set working directory depending on loop variable
+    if(!dir.exists(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))){
+      dir.create(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
+      setwd(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
       dir.create("spectrees")
       dir.create("lambdaplots")
       dir.create("storedplots")
@@ -45,7 +56,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
       dir.create("matrixplots")
     }
     
-    setwd(paste(wrkdir,toString(overallcount),sep=""))
+    setwd(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
     
     spectreematrix=matrix(0,nrow=numberofspec,ncol=ncols)
     
@@ -56,7 +67,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
     heatmapdatanewsds=matrix(0,nrow=length(Rvec),ncol=ncols)
     rownames(heatmapdatanew)=Rvec
     colnames(heatmapdatanew)=colnamesstuff
-
     
     for(R in Rvec){
       Rmatrix=matrix(0,nrow=numberofspec*numberofgen,ncol=lineagecount)
@@ -251,5 +261,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
     save.image()
     
     setwd("..")
+    }#close rho loop
   }# close real mus loop
 }#close real lambdasloop
