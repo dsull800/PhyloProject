@@ -177,11 +177,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
             #make genePSR as function of age
             gene_PSR = gene_LTT$relative_slopes
             
-            #this plot goes from past to present, reverse of what is standard in the rest of the code
-            plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
-            lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
-            title("species tree/gene tree LTT")
-            
             #get lambdahatpprime values for later
             
             lambda_hat_p_prime_new=rev(gene_PSR)
