@@ -209,7 +209,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
             plot(y=lambda_hat_p_prime_new,x=lineagecountgrid,type="l",col=emp_color)
             lines(y=real_lambda_hat,x=lineagecountgrid,type="l",col=sim_color)
             title("Gene PSR/Species PSR")
-            legend(x=crown_age, y=max(spectreepdrpsr$PSR), legend=c("tree PSR", "calculated PSR"), lty=c(1,1), col=c(emp_color, sim_color))
+            legend(x=0, y=max(gene_PSR), legend=c("tree PSR", "calculated PSR"), lty=c(1,1), col=c(emp_color, sim_color))
             
             #this plot goes from past to present, reverse of what is standard in the rest of the code
             plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
