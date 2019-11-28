@@ -196,7 +196,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
               Rmatrix[(Ntipnumber+1)*numberofgen-numberofgen+1+genetreenum,i]=epsilonnew[i]
             }
             
-            file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
+            file=paste(Ntipnumber,"_",genetreenum,"_",R,".pdf",sep="")
             
             # save plots of epsilon vs age and gene PSR
             setwd("storedplots")
@@ -218,7 +218,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
             invisible(dev.off());
             
             # save information to files in certain directories
-            file=paste(Ntipnumber,"_",genetreenum,".txt",sep="")
+            file=paste(Ntipnumber,"_",genetreenum,"_",R,".txt",sep="")
             setwd("../gentrees")
             file.create(file)
             write_tree(gentree,file)
