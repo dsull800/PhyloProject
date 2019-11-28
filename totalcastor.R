@@ -3,33 +3,36 @@ require("prospectr")
 require("plot.matrix")
 require("matrixStats")
 require("naniar")
+
 overallcount=0
+
+#set some loop variables for matrices and variables for grids
+oldest_age_sim=1000
+lineagecount=100
+#set fineness of age grid
+age_grid_fineness=.1
+#make column names for matrices
+rho			= .5
+#more varibales for column names
+ncols=lineagecount
+colnamesstuff=c()
+for(i in seq(1,ncols)){
+  inter_val=toString(i/ncols)
+  colnamesstuff=c(colnamesstuff,inter_val)
+}
+# vector of R values
+Rvec=c(10^-1,1,10)
+#number of spectrees to generate
+numberofspec=21
+#number of gene trees to generate for each species tree
+numberofgen=10
+
 #loop through functions for different scenarios
 for(age2lambda in c(function(ages) rep(1,length(ages)))){
   for(age2mu in c(function(ages) rep(0,length(ages)), function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)))){
     overallcount=overallcount+1
     #set working directory depedning on loop variable
     setwd(paste("/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv",toString(overallcount),sep=""))
-    #set some loop variables for matrices and variables for grids
-    oldest_age_sim=1000
-    lineagecount=100
-    #set fineness of age grid
-    age_grid_fineness=.1
-    #make column names for matrices
-    rho			= .5
-    #more varibales for column names
-    ncols=lineagecount
-    colnamesstuff=c()
-    for(i in seq(1,ncols)){
-      inter_val=toString(i/ncols)
-      colnamesstuff=c(colnamesstuff,inter_val)
-    }
-    # vector of R values
-    Rvec=c(10^-1,1,10)
-    #number of spectrees to generate
-    numberofspec=21
-    #number of gene trees to generate for each species tree
-    numberofgen=10
     
     spectreematrix=matrix(0,nrow=numberofspec,ncol=ncols)
     
@@ -77,7 +80,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
           
           spectree = sim$trees[[1]]
           root_age = castor::get_tree_span(spectree)[["max_distance"]]
-          cat(sprintf("Tree has %d tips, spans %g Myr\n",length(spectree[["tip.label"]]),root_age))
+          cat(sprintf("Tree has %d tips, spans %g Myr, run number %g \n",length(spectree[["tip.label"]]),root_age,Ntipnumber))
           
           
           file=paste(R,"_",Ntipnumber,"_",".txt",sep="")
