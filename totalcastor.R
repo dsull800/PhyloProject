@@ -6,6 +6,8 @@ require("naniar")
 
 overallcount=0
 
+wrkdir="/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv"
+
 #set some loop variables for matrices and variables for grids
 oldest_age_sim=1000
 lineagecount=100
@@ -23,7 +25,7 @@ for(i in seq(1,ncols)){
 # vector of R values
 Rvec=c(10^-1,1,10)
 #number of spectrees to generate
-numberofspec=21
+numberofspec=7
 #number of gene trees to generate for each species tree
 numberofgen=10
 
@@ -32,7 +34,18 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
   for(age2mu in c(function(ages) rep(0,length(ages)), function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)))){
     overallcount=overallcount+1
     #set working directory depedning on loop variable
-    setwd(paste("/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv",toString(overallcount),sep=""))
+    if(!dir.exists(paste(wrkdir,toString(overallcount),sep=""))){
+      dir.create(paste(wrkdir,toString(overallcount),sep=""))
+      setwd(paste(wrkdir,toString(overallcount),sep=""))
+      dir.create("spectrees")
+      dir.create("lambdaplots")
+      dir.create("storedplots")
+      dir.create("gentrees")
+      dir.create("spectreeinfo")
+      dir.create("matrixplots")
+    }
+    
+    setwd(paste(wrkdir,toString(overallcount),sep=""))
     
     spectreematrix=matrix(0,nrow=numberofspec,ncol=ncols)
     
@@ -183,6 +196,9 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
             plot(y=lambda_hat_p_prime_new,x=lineagecountgrid)
             title("GENE PSR")
             
+            plot(y=real_lambda_hat,x=lineagecountgrid)
+            ("Species PSR")
+            
             #this plot goes from past to present, reverse of what is standard in the rest of the code
             plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
             lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
@@ -220,7 +236,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
     pdf(file=file, width=5, height=5)
     
     par(mar=c(5.1, 4.1, 4.1, 4.1))
-    plot(epsilonsdrealnew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+    plot(heatmapdatanewsds,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
     # title("sd epsilons new")
     
     par(mar=c(5.1, 5.1, 5.1, 5.1))
