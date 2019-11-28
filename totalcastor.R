@@ -1,8 +1,3 @@
-##Something is wrong with the gene_PSR, need to account for crown_age=20 when making plots and doing other calculations
-#plots go from present at the left to past at the right
-
-#If very large trees are deterministic, should I only simulate one species tree for given R value?
-
 require("castor")
 require("prospectr")
 require("plot.matrix")
@@ -22,7 +17,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
     age_grid_fineness=.1
     #make column names for matrices
     rho			= .5
-    #
+    #more varibales for column names
     ncols=lineagecount
     colnamesstuff=c()
     for(i in seq(1,ncols)){
@@ -46,11 +41,11 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
     rownames(heatmapdatanew)=Rvec
     colnames(heatmapdatanew)=colnamesstuff
 
-    #initialize loop variable
-    Ntipnumber=-1
     
     for(R in Rvec){
       Rmatrix=matrix(0,nrow=numberofspec*numberofgen,ncol=lineagecount)
+      #initialize loop variable
+      Ntipnumber=-1
     for(Ntips in c(rep(100000,numberofspec))){
       Ntipnumber=Ntipnumber+1
       
@@ -158,10 +153,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
             lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
             title("species tree/gene tree LTT")
             
-            # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
-            # --> lttcountspec$relative_slopes[] is synchronized with ages[] = root_age - lttcountspec$times[]
-            
-            
             #get lambdahatpprime values for later
             
             lambda_hat_p_prime_new=rev(gene_PSR)
@@ -189,6 +180,10 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
             plot(y=lambda_hat_p_prime_new,x=lineagecountgrid)
             title("GENE PSR")
             
+            #this plot goes from past to present, reverse of what is standard in the rest of the code
+            plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
+            lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
+            title("species tree/gene tree LTT")
             invisible(dev.off());
             
             # save information to files in certain directories
