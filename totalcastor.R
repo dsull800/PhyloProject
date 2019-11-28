@@ -125,7 +125,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
           
           gentime=10^-7
           popsize=age2lambda(0)/(R*gentime)
-          for(i in seq(1,numberofspec)){
+          for(i in seq(1,numberofgen)){
             genetreenum=genetreenum+1
             genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
                                                    population_sizes = popsize,
@@ -164,7 +164,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)))){
             # Rmatrix stuff
             
             for(i in seq(1,length(epsilonnew))){
-              Rmatrix[(Ntipnumber+1)*10-9+genetreenum,i]=epsilonnew[i]
+              Rmatrix[(Ntipnumber+1)*numberofgen-numberofgen+1+genetreenum,i]=epsilonnew[i]
             }
             
             file=paste(Ntipnumber,"_",genetreenum,".pdf",sep="")
