@@ -35,14 +35,14 @@ numberofgen=10
 #loop through functions for different scenarios
 for(age2lambda in c(function(ages) rep(1,length(ages)),
                     function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
-                    function(ages) function(ages) 0.1 + 0.9*exp(-0.05*ages),
+                    function(ages) function(ages) 0.1 + 0.9*exp(-0.005*ages),
                     function(ages) 0.7 + 0.3*exp(0.003*ages))){
                                             
   
   for(age2mu in c(function(ages) rep(0,length(ages)), 
                   function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
-                  function(ages) 0.1 + 0.3*exp(-0.05*ages),
-                  function(ages) 0.1 + 0.3*exp(0.05*ages))){
+                  function(ages) 0.1 + 0.3*exp(-0.005*ages),
+                  function(ages) 0.1 + 0.3*exp(0.0003*ages))){
     funcnumber=funcnumber+1
     
     for(rho in rhovec){
@@ -153,7 +153,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
           genetreenum=-1
           
           gentime=10^-7
-          popsize=age2lambda(0)/(R*gentime)
+          popsize=spectreepdrpsr$PSR[1]/(R*gentime)
           for(i in seq(1,numberofgen)){
             genetreenum=genetreenum+1
             genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
