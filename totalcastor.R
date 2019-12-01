@@ -16,6 +16,8 @@ oldest_age_sim=1000
 lineagecount=100
 #set fineness of age grid
 age_grid_fineness=.1
+# specify number of extant tips in species tree
+numtips=100000
 #more varibales for column names
 ncols=lineagecount
 colnamesstuff=c()
@@ -34,13 +36,13 @@ numberofgen=10
 
 #loop through functions for different scenarios
 for(age2lambda in c(function(ages) rep(1,length(ages)),
-                    function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
+                    function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
                     function(ages) function(ages) 0.1 + 0.9*exp(-0.005*ages),
                     function(ages) 0.7 + 0.3*exp(0.003*ages))){
                                             
   
   for(age2mu in c(function(ages) rep(0,length(ages)), 
-                  function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)),
+                  function(ages) 0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
                   function(ages) 0.1 + 0.3*exp(-0.005*ages),
                   function(ages) 0.1 + 0.3*exp(0.0003*ages))){
     funcnumber=funcnumber+1
@@ -75,7 +77,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
       Rmatrix=matrix(0,nrow=numberofspec*numberofgen,ncol=lineagecount)
       #initialize loop variable
       Ntipnumber=-1
-    for(Ntips in c(rep(100000,numberofspec))){
+    for(Ntips in c(rep(numtips,numberofspec))){
       Ntipnumber=Ntipnumber+1
       
       #set age grid and rho
