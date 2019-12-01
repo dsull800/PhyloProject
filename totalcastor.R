@@ -138,8 +138,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
           
           file=paste(R,"_",Ntipnumber,".pdf",sep="")
           pdf(file=file, width=5, height=5)
-          plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
-          plot(y=lambda_hat_spectree,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)))
+          plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)),type="l",col=emp_color)
+          lines(y=lambda_hat_spectree,x=lineagecountgrid,type="l",col=sim_color)
           invisible(dev.off());
           
           file=paste(R,"_",Ntipnumber,".rds",sep="")
@@ -200,7 +200,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
             pdf(file=file, width=5, height=5)
             
             
-            plot(y=epsilonnew,x=lineagecountgrid)
+            plot(y=epsilonnew,x=lineagecountgrid,type="l",col="green")
             title("realepsilon vs. time")
             
             plot(y=lambda_hat_p_prime_new,x=lineagecountgrid,type="l",col=emp_color)
