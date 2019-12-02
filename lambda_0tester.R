@@ -121,7 +121,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
               cat(sprintf("Tree has %d tips, spans %g Myr, run number %g \n",length(spectree[["tip.label"]]),root_age,Ntipnumber))
               
               
-              file=paste(R,"_",Ntipnumber,"_",".txt",sep="")
+              file=paste(lambda_0,"_",R,"_",Ntipnumber,"_",".txt",sep="")
               setwd("spectrees")
               file.create(file)
               write_tree(spectree,file)
@@ -146,13 +146,13 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
               
               setwd("lambdaplots")
               
-              file=paste(Ntipnumber,".pdf",sep="")
+              file=paste(Ntipnumber,"_",lambda_0,".pdf",sep="")
               pdf(file=file, width=5, height=5)
               plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)),type="l",col=emp_color)
               lines(y=lambda_hat_spectree,x=lineagecountgrid,type="l",col=sim_color)
               invisible(dev.off());
               
-              file=paste(Ntipnumber,".rds",sep="")
+              file=paste(Ntipnumber,"_",lambda_0,".rds",sep="")
               saveRDS(c(real_lambda_hat,lambda_hat_spectree),file)
               
               setwd("..")
@@ -205,7 +205,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
                 
               }
                 
-                file=paste(Ntipnumber,"_",genetreenum,"_",R,".pdf",sep="")
+                file=paste(Ntipnumber,"_",genetreenum,"_",R,"_",lambda_0,".pdf",sep="")
                 
                 # save plots of epsilon vs age and gene PSR
                 setwd("storedplots")
