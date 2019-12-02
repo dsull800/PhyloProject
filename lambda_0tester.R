@@ -1,4 +1,3 @@
-
 require("castor")
 require("prospectr")
 require("plot.matrix")
@@ -34,48 +33,57 @@ rhovec=c(1,.5)
 numberofspec=7
 #number of gene trees to generate for each species tree
 numberofgen=10
+#vector of lambda_0s
+lambda_0vec=c(1,3,5)
+
 
 #loop through functions for different scenarios
-for(age2lambda in c(function(ages) rep(1,length(ages)),
-                    function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
-                    function(ages) function(ages) 0.1 + 0.9*exp(-0.005*ages),
-                    function(ages) 0.7 + 0.3*exp(0.003*ages))){
+for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
+                    function(ages,lambda_0) 0.1+ lambda_0*exp(-(ages-1)^2/(2*0.5^2)),
+                    function(ages,lambda_0) 0.1 + lambda_0*exp(-0.005*ages),
+                    function(ages,lambda_0) 0.7 + lambda_0*exp(0.003*ages))){
   
   
-  for(age2mu in c(function(ages) rep(0,length(ages)), 
-                  function(ages) 0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
-                  function(ages) 0.1 + 0.3*exp(-0.005*ages),
-                  function(ages) 0.1 + 0.3*exp(0.0003*ages))){
+  for(age2mu in c(function(ages,lambda_0) rep(0,length(ages)), 
+                  function(ages,lambda_0) 0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
+                  function(ages,lambda_0) 0.1 + 0.7*lambda_0*exp(-0.005*ages),
+                  function(ages,lambda_0) 0.1 + 0.4*lambda_0*exp(0.0003*ages))){
+    
     funcnumber=funcnumber+1
     
     for(rho in rhovec){
       
-      #set working directory depending on loop variable
-      if(!dir.exists(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))){
-        dir.create(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
-        setwd(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
-        dir.create("spectrees")
-        dir.create("lambdaplots")
-        dir.create("storedplots")
-        dir.create("gentrees")
-        dir.create("spectreeinfo")
-        dir.create("matrixplots")
-      }
-      
-      setwd(paste(wrkdir,toString(funcnumber),"_",rho,sep=""))
-      
       spectreematrix=matrix(0,nrow=numberofspec,ncol=ncols)
       
-      heatmapdatanew=matrix(0,nrow=length(Rvec),ncol=ncols)
-      rownames(heatmapdatanew)=Rvec
+      heatmapdatanew=matrix(0,nrow=length(lambda_0vec),ncol=ncols)
+      rownames(heatmapdatanew)=lambda_0vec
       colnames(heatmapdatanew)=colnamesstuff
       
-      heatmapdatanewsds=matrix(0,nrow=length(Rvec),ncol=ncols)
-      rownames(heatmapdatanew)=Rvec
+      heatmapdatanewsds=matrix(0,nrow=length(lambda_0vec),ncol=ncols)
+      rownames(heatmapdatanew)=lambda_0vec
       colnames(heatmapdatanew)=colnamesstuff
       
       for(R in Rvec){
-        Rmatrix=matrix(0,nrow=numberofspec*numberofgen,ncol=lineagecount)
+        
+        #lambdasmatrix
+        lambdamatrix=matrix(0,ncol=lineagecount,nrow=numberofgen*numberofspec)
+        
+        for(lambda_0 in lambda_0vec){
+          
+          #set working directory depending on loop variable
+          if(!dir.exists(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))){
+            dir.create(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
+            setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
+            dir.create("spectrees")
+            dir.create("lambdaplots")
+            dir.create("storedplots")
+            dir.create("gentrees")
+            dir.create("spectreeinfo")
+            dir.create("matrixplots")
+          }
+          
+          setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
+          
         #initialize loop variable
         Ntipnumber=-1
         for(Ntips in c(rep(numtips,numberofspec))){
@@ -85,8 +93,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
           age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
           
           #simulate trees
-          for(lambdas in list(age2lambda(age_grid_sim))){
-            for(mus in list(age2mu(age_grid_sim))){
+          for(lambdas in list(age2lambda(age_grid_sim,lambda_0))){
+            for(mus in list(age2mu(age_grid_sim,lambda_0))){
               # tryCatch({
               
               findcrownage = simulate_deterministic_hbd(LTT0 = Ntips,
@@ -137,13 +145,13 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
               
               setwd("lambdaplots")
               
-              file=paste(R,"_",Ntipnumber,".pdf",sep="")
+              file=paste(Ntipnumber,".pdf",sep="")
               pdf(file=file, width=5, height=5)
               plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)),type="l",col=emp_color)
               lines(y=lambda_hat_spectree,x=lineagecountgrid,type="l",col=sim_color)
               invisible(dev.off());
               
-              file=paste(R,"_",Ntipnumber,".rds",sep="")
+              file=paste(Ntipnumber,".rds",sep="")
               saveRDS(c(real_lambda_hat,lambda_hat_spectree),file)
               
               setwd("..")
@@ -188,11 +196,13 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
                 
                 epsilonnew=(lambda_hat_p_prime_new-real_lambda_hat)/real_lambda_hat
                 
-                # Rmatrix stuff
+                # lambdamatrix stuff
                 
                 for(i in seq(1,length(epsilonnew))){
-                  Rmatrix[(Ntipnumber+1)*numberofgen-numberofgen+1+genetreenum,i]=epsilonnew[i]
+                  lambdamatrix[(Ntipnumber+1)*numberofgen-numberofgen+1+genetreenum,i]=epsilonnew[i]
                 }
+                
+              }
                 
                 file=paste(Ntipnumber,"_",genetreenum,"_",R,".pdf",sep="")
                 
@@ -231,14 +241,14 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
               # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
             }#close mus loop
           }#close lambdas loop
-        }#close Ntips loop
-        whatisR=Rvec==R
+        #close Ntips loop
+        whatislambda_0=lambda_0vec==lambda_0
         for(i in seq(1:lineagecount)){
-          heatmapdatanew[which(whatisR),i]=colMeans(Rmatrix)[i]
+          heatmapdatanew[which(whatislambda_0),i]=colMeans(lambdamatrix)[i]
           
-          heatmapdatanewsds[which(whatisR),i]=colSds(Rmatrix)[i]
+          heatmapdatanewsds[which(whatislambda_0),i]=colSds(lambdamatrix)[i]
         }
-      } #close r loop
+        }#close lambda_0 loop
       
       #create and plot matrices
       setwd("matrixplots")
@@ -261,6 +271,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
       save.image()
       
       setwd("..")
-    }#close rho loop
+        #close lambda_0 loop
+      }#close R loop
+      }#close rho loop
   }# close real mus loop
 }#close real lambdasloop
