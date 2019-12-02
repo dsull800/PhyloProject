@@ -6,7 +6,7 @@ require("naniar")
 
 funcnumber=0
 
-wrkdir="/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv"
+wrkdir="/Users/danielsullivan/desktop/phylolambda0/PhyloProject-masterv"
 
 # define plot colors
 sim_color	= "blue"
@@ -68,21 +68,22 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
         #lambdasmatrix
         lambdamatrix=matrix(0,ncol=lineagecount,nrow=numberofgen*numberofspec)
         
+        if(!dir.exists(paste(wrkdir,toString(funcnumber),"_",rho,"_",R,sep=""))){
+          dir.create(paste(wrkdir,toString(funcnumber),"_",rho,"_",R,sep=""))
+          setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",R,sep=""))
+          dir.create("spectrees")
+          dir.create("lambdaplots")
+          dir.create("storedplots")
+          dir.create("gentrees")
+          dir.create("spectreeinfo")
+          dir.create("matrixplots")
+        }
+        
+        setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",R,sep=""))
+        
         for(lambda_0 in lambda_0vec){
           
           #set working directory depending on loop variable
-          if(!dir.exists(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))){
-            dir.create(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
-            setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
-            dir.create("spectrees")
-            dir.create("lambdaplots")
-            dir.create("storedplots")
-            dir.create("gentrees")
-            dir.create("spectreeinfo")
-            dir.create("matrixplots")
-          }
-          
-          setwd(paste(wrkdir,toString(funcnumber),"_",rho,"_",lambda_0,"_",R,sep=""))
           
         #initialize loop variable
         Ntipnumber=-1
