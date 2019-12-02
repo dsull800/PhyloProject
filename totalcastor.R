@@ -1,7 +1,4 @@
-##Something is wrong with the gene_PSR, need to account for crown_age=20 when making plots and doing other calculations
 #plots go from present at the left to past at the right
-
-#If very large trees are deterministic, should I only simulate one species tree for given R value?
 
 require("castor")
 require("prospectr")
@@ -10,10 +7,10 @@ require("matrixStats")
 require("naniar")
 overallcount=0
 #loop through functions for different scenarios
-for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/max(ages)))){
+for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) exp(-ages*0.1))){
   for(age2mu in c(function(ages) rep(0,length(ages)), function(ages) 0.1 + 1*exp(-(ages-ages[floor(length(ages)/2)])^2/(2*0.5^2)))){
     overallcount=overallcount+1
-    #set working directory depedning on loop variable
+    #set working directory depending on loop variable
     setwd(paste("/Users/danielsullivan/desktop/phylobashstuff/PhyloProject-masterv",toString(overallcount),sep=""))
     #set some loop variables for matrices and variables for grids
     count100=1
@@ -23,8 +20,11 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     oldest_age_sim=1000
     #set fineness of age grid
     age_grid_fineness=.1
+    #variable for number of points to evaluate LTTs up to crownage
+    lineageout=100
     #make column names for matrices
-    ncols=oldest_age_sim/age_grid_fineness+1
+    # ncols=oldest_age_sim/age_grid_fineness+1
+    ncols=lineageout
     colnamesstuff=c()
     for(i in seq(1,ncols)){
       inter_val=toString(i/ncols)
@@ -32,7 +32,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     }
     #create matrices for storing info
     heatmapdata=matrix(0,nrow=3,ncol=ncols)
-    rownames(heatmapdata)=c("max_val 100","max_val 10","max_val 1")
+    rownames(heatmapdata)=c("R 100","R 10","R 1")
     colnames(heatmapdata)=colnamesstuff
     
     spectreematrix=matrix(0,nrow=21,ncol=ncols)
@@ -42,7 +42,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
     matrix1=matrix(0,nrow=21*10/3,ncol=ncols)
     
     heatmapdatanew=matrix(0,nrow=3,ncol=ncols)
-    rownames(heatmapdatanew)=c("max_val 100","max_val 10","max_val 1")
+    rownames(heatmapdatanew)=c("R 100","R 10","R 1")
     colnames(heatmapdatanew)=colnamesstuff
     
     matrix100new=matrix(0,nrow=21*10/3,ncol=ncols)
@@ -55,18 +55,18 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
       Ntipnumber=Ntipnumber+1
       if(Ntipnumber%%3==0){
      
-        max_val=10
+        R=10
       }else if(Ntipnumber%%3==1){
        
-        max_val=1
+        R=1
       }else {
    
-        max_val=10^-1
+        R=10^-1
       }
       
       #set age grid and rho
       age_grid_sim = seq(from=0, to = oldest_age_sim, by=age_grid_fineness)
-      rho			= .5
+      rho			= 1
       #simulate trees
       for(lambdas in list(age2lambda(age_grid_sim))){
         for(mus in list(age2mu(age_grid_sim))){
@@ -81,7 +81,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
           
           crown_age=max(findcrownage$ages[findcrownage$LTT>=1])
           
-          lineagecountgrid=seq(from=0,to=crown_age,length.out=1000)
+          #make this grid staggered
+          lineagecountgrid=seq(from=0,to=crown_age,length.out=lineageout)
           
           
           sim= castor::generate_tree_hbd_reverse(Ntips=Ntips, age_grid=age_grid_sim, lambda=lambdas,mu=mus,crown_age=crown_age,rho=rho)
@@ -100,8 +101,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
           file.create(file)
           write_tree(spectree,file)
           setwd("..")
-          
-          # if extinction is 0 why isn;t sim$final_time=root_age? Could I just calculate this once and then store it?
+ 
           spectreepdrpsr = simulate_deterministic_hbd(LTT0 = length(spectree[["tip.label"]]),
                                                       oldest_age = crown_age,
                                                       age0=0,
@@ -141,16 +141,17 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
           
           for(i in seq(1,10)){
             genetreenum=genetreenum+1
+            gen_time=1e-7
             genetreestuff = generate_gene_tree_msc(spectree,allele_counts = 1,
-                                                   population_sizes = 10^8/max_val,
-                                                   generation_times = 10^-7,
+                                                   population_sizes = age2lambda(0)/(R*gen_time),
+                                                   generation_times = gen_time,
                                                    ploidy = 1);
             
             gentree=genetreestuff$tree
             
             # Fit PSR on grid
             
-            Ngrid = 10
+            Ngrid = 5
             
             psr_age_grid = seq(from=0,to=crown_age,length.out=Ngrid)
             fit = fit_hbd_psr_on_grid(gentree,
@@ -159,7 +160,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
                                       age0=0,
                                       min_PSR = -50,
                                       max_PSR = +150,
-                                      guess_PSR= max_val,
+                                      guess_PSR= R,
                                       condition = "stem",
                                       Ntrials = 10,# perform 10 fitting trials
                                       Nthreads = 4,# use two CPUs
@@ -203,10 +204,6 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             #make genePSR as function of age
             gene_PSR = gene_LTT$relative_slopes
             
-            #this plot goes from past to present, reverse of what is standard in the rest of the code
-            plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
-            lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
-            title("species tree/gene tree LTT")
             
             # lttcountspec$relative_slopes[n] = PSR at time lttcountspec$times[n] and thus at age root_age-lttcountspec$times[n]
             # --> lttcountspec$relative_slopes[] is synchronized with ages[] = root_age - lttcountspec$times[]
@@ -292,6 +289,10 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),function(ages) rev(ages/m
             plot(y=lambda_hat_p_prime_new,x=lineagecountgrid)
             title("GENE PSR")
             
+            #this plot goes from past to present, reverse of what is standard in the rest of the code
+            plot(gene_LTT$times-distancebetween, gene_LTT$lineages, type="l", xlab="time", ylab="# clades",col="red",ylim =c(0,101000))
+            lines(lttcountspec$times, lttcountspec$lineages, type="l", xlab="time", ylab="# clades",ylim=c(0,101000))
+            title("species tree/gene tree LTT")
             invisible(dev.off());
             
            # save information to files in certain directories
