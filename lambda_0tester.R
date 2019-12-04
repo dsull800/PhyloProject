@@ -39,15 +39,15 @@ lambda_0vec=c(1,3,5)
 
 #loop through functions for different scenarios
 for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
-                    function(ages,lambda_0) 0.1+ lambda_0*exp(-(ages-1)^2/(2*0.5^2)),
+                    function(ages,lambda_0) 0.7+ lambda_0*exp(-(ages-1)^2/(2*0.5^2)),
                     function(ages,lambda_0) 0.1 + lambda_0*exp(-0.005*ages),
                     function(ages,lambda_0) 0.7 + lambda_0*exp(0.003*ages))){
   
   
   for(age2mu in c(function(ages,lambda_0) rep(0,length(ages)), 
                   function(ages,lambda_0) 0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
-                  function(ages,lambda_0) 0.1 + 0.7*lambda_0*exp(-0.005*ages),
-                  function(ages,lambda_0) 0.1 + 0.4*lambda_0*exp(0.0003*ages))){
+                  function(ages,lambda_0) 0.1 + 0.7*exp(-0.005*ages),
+                  function(ages,lambda_0) 0.1 + 0.4*exp(0.0003*ages))){
     
     funcnumber=funcnumber+1
     
@@ -118,7 +118,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
               
               spectree = sim$trees[[1]]
               root_age = castor::get_tree_span(spectree)[["max_distance"]]
-              cat(sprintf("Tree has %d tips, spans %g Myr, run number %g \n",length(spectree[["tip.label"]]),root_age,Ntipnumber))
+              cat(sprintf("Tree has %d tips, spans %g Myr, run number %g \n",length(spectree[["tip.label"]]),root_age,funcnumber))
               
               
               file=paste(lambda_0,"_",R,"_",Ntipnumber,"_",".txt",sep="")
@@ -150,6 +150,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
               pdf(file=file, width=5, height=5)
               plot(y=real_lambda_hat,x=lineagecountgrid,ylim=c(min(real_lambda_hat),max(real_lambda_hat)),type="l",col=emp_color)
               lines(y=lambda_hat_spectree,x=lineagecountgrid,type="l",col=sim_color)
+              title(paste("PSR[0]=",spectreepdrpsr$PSR[1]))
               invisible(dev.off());
               
               file=paste(Ntipnumber,"_",lambda_0,".rds",sep="")
@@ -213,7 +214,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
                 
                 
                 plot(y=epsilonnew,x=lineagecountgrid,type="l",col="green")
-                title("realepsilon vs. time")
+                title(paste("realepsilon vs. time","PSR[1]=",spectreepdrpsr$PSR[1]))
                 
                 plot(y=lambda_hat_p_prime_new,x=lineagecountgrid,type="l",col=emp_color)
                 lines(y=real_lambda_hat,x=lineagecountgrid,type="l",col=sim_color)
@@ -231,6 +232,8 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
                 setwd("../gentrees")
                 file.create(file)
                 write_tree(gentree,file)
+                
+                file=paste(Ntipnumber,"_",genetreenum,"_",R,".rds",sep="")
                 
                 setwd("../spectreeinfo")
                 
@@ -272,7 +275,7 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
       save.image()
       
       setwd("..")
-        #close lambda_0 loop
+        
       }#close R loop
       }#close rho loop
   }# close real mus loop

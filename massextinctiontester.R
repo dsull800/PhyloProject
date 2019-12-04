@@ -221,6 +221,8 @@ for(meanextinction in c(1,5,10)){
                       
                       setwd("../spectreeinfo")
                       
+                      file=paste(Ntipnumber,"_",genetreenum,"_",R,".rds",sep="")
+                      
                       saveRDS(spectreepdrpsr,file)
                       
                       setwd("..")

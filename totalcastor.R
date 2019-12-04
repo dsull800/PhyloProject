@@ -38,7 +38,7 @@ numberofgen=10
 #loop through functions for different scenarios
 for(age2lambda in c(function(ages) rep(1,length(ages)),
                     function(ages) rep(1,length(ages))+0.1 + 1*exp(-(ages-1)^2/(2*0.5^2)),
-                    function(ages) function(ages) 0.1 + 0.9*exp(-0.005*ages),
+                    function(ages)  0.1 + 0.9*exp(-0.005*ages),
                     function(ages) 0.7 + 0.3*exp(0.003*ages))){
   
   
@@ -222,6 +222,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
                 write_tree(gentree,file)
                 
                 setwd("../spectreeinfo")
+                
+                file=paste(Ntipnumber,"_",genetreenum,"_",R,".rds",sep="")
                 
                 saveRDS(spectreepdrpsr,file)
                 
