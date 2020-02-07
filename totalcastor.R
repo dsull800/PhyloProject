@@ -166,6 +166,8 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
                 
                 gentree=genetreestuff$tree
                 
+                print(age2lambda(0)/(gentime*popsize)) # debug
+                
                 #compute distance between to get values from gene tree for comparisons
                 root_age = castor::get_tree_span(spectree)[["max_distance"]]
                 root_age_gene_tree=castor::get_tree_span(gentree)[["max_distance"]]
@@ -187,6 +189,13 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
                 #compute epsilon values 
                 
                 epsilonnew=(lambda_hat_p_prime_new-real_lambda_hat)/real_lambda_hat
+                
+                cat(sprintf("Debugging: \n"))
+                print(lambda_hat_p_prime_new) # debug
+                print(real_lambda_hat) # debug
+                print(epsilonnew) # debug
+                print(rownames(heatmapdatanew))  # debug
+                print(colnames(heatmapdatanew))  # debug
                 
                 # Rmatrix stuff
                 
@@ -228,7 +237,7 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
                 saveRDS(spectreepdrpsr,file)
                 
                 setwd("..")
-                
+                stop() # debug
               }#close genetreeloop
               # }, error=function(e){cat("ERROR :",conditionMessage(e), "\n",file)})
             }#close mus loop
@@ -248,11 +257,11 @@ for(age2lambda in c(function(ages) rep(1,length(ages)),
       pdf(file=file, width=5, height=5)
       
       par(mar=c(5.1, 4.1, 4.1, 4.1))
-      plot(heatmapdatanewsds,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+      plot(heatmapdatanewsds,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
       # title("sd epsilons new")
       
       par(mar=c(5.1, 5.1, 5.1, 5.1))
-      plot(heatmapdatanew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+      plot(heatmapdatanew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
       #title("average epsilons new")
       
       par(mar=c(5.1, 5.1, 5.1, 5.1))

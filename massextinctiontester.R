@@ -30,9 +30,9 @@ Rvec=c(10^-1,1,10)
 #vector of rho values
 rhovec=c(1,.5)
 #number of spectrees to generate
-numberofspec=2
+numberofspec=7
 #number of gene trees to generate for each species tree
-numberofgen=2
+numberofgen=10
 
 #loop through parameters for gaussian
 for(meanextinction in c(1,5,10)){
@@ -246,11 +246,11 @@ for(meanextinction in c(1,5,10)){
             pdf(file=file, width=5, height=5)
             
             par(mar=c(5.1, 4.1, 4.1, 4.1))
-            plot(heatmapdatanewsds,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+            plot(heatmapdatanewsds,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
             # title("sd epsilons new")
             
             par(mar=c(5.1, 5.1, 5.1, 5.1))
-            plot(heatmapdatanew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+            plot(heatmapdatanew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
             #title("average epsilons new")
             
             par(mar=c(5.1, 5.1, 5.1, 5.1))

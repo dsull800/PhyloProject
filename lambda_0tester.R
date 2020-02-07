@@ -209,6 +209,8 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
                 file=paste(Ntipnumber,"_",genetreenum,"_",R,"_",lambda_0,".pdf",sep="")
                 
                 # save plots of epsilon vs age and gene PSR
+                # you are only going to save the last gene tree LTT and PSR for a given run!!!
+                # this is justifiable though, look at the standard deviation matirx for runs, very close to 0 near the present
                 setwd("storedplots")
                 pdf(file=file, width=5, height=5)
                 
@@ -260,11 +262,11 @@ for(age2lambda in c(function(ages,lambda_0) rep(lambda_0,length(ages)),
       pdf(file=file, width=5, height=5)
       
       par(mar=c(5.1, 4.1, 4.1, 4.1))
-      plot(heatmapdatanewsds,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+      plot(heatmapdatanewsds,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
       # title("sd epsilons new")
       
       par(mar=c(5.1, 5.1, 5.1, 5.1))
-      plot(heatmapdatanew,border=NA,col=hcl.colors(10, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
+      plot(heatmapdatanew,border=NA,col=hcl.colors(50, palette = "viridis", alpha = NULL, rev = FALSE, fixup = TRUE))
       #title("average epsilons new")
       
       par(mar=c(5.1, 5.1, 5.1, 5.1))
